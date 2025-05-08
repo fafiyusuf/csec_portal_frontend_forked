@@ -29,6 +29,9 @@ importers:
       '@fontsource/lexend':
         specifier: ^5.0.8
         version: 5.2.6
+      '@netlify/plugin-nextjs':
+        specifier: ^5.11.1
+        version: 5.11.1
       '@radix-ui/react-alert-dialog':
         specifier: ^1.0.5
         version: 1.1.11(@types/react-dom@18.3.7(@types/react@18.3.21))(@types/react@18.3.21)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -636,6 +639,10 @@ packages:
 
   '@napi-rs/wasm-runtime@0.2.8':
     resolution: {integrity: sha512-OBlgKdX7gin7OIq4fadsjpg+cp2ZphvAIKucHsNfTdJiqdOmOEwQd/bHi0VwNrcw5xpBJyUw6cK/QilCqy1BSg==}
+
+  '@netlify/plugin-nextjs@5.11.1':
+    resolution: {integrity: sha512-JD4JtrhW3R0uDaROfNzmhVoYFvj+GS2ARq7YXVXNFxo+rNyU4wJ6nuDZFTsuoEp4nbIVsm2oPaXyjgqk4pd1EA==}
+    engines: {node: '>=18.0.0'}
 
   '@next/env@14.1.0':
     resolution: {integrity: sha512-Py8zIo+02ht82brwwhTg36iogzFqGLPXlRGKQw5s+qP/kMNc4MAyDeEwBKDijk6zTIbegEgu8Qy7C1LboslQAw==}
@@ -4459,6 +4466,8 @@ snapshots:
       '@emnapi/runtime': 1.4.1
       '@tybys/wasm-util': 0.9.0
     optional: true
+
+  '@netlify/plugin-nextjs@5.11.1': {}
 
   '@next/env@14.1.0': {}
 
