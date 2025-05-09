@@ -1,5 +1,5 @@
 import { useUserStore } from "@/stores/userStore";
-import { Head, Role, Rule } from "@/types/admin";
+import { Head, Role, Rules } from "@/types/admin";
 import { Member } from "@/types/member";
 import axios from "axios";
 import { create } from "zustand";
@@ -18,7 +18,7 @@ interface ClubRules {
 interface AdminState {
   members: Member[];
   roles: Role[];
-  rules: Rule[];
+  rules: Rules;
   divisions: string[];
   loading: boolean;
   error: string | null;
@@ -76,12 +76,14 @@ export const useAdminStore = create<AdminState>()(
           members: [],
           heads: [],
           roles: [],
-          rules: [
-            { id: "1", name: "New Absences", description: "Head must approve this for request for review", value: 1 },
-            { id: "2", name: "Warning After", description: "Send warning notification after this many absences", value: 3 },
-            { id: "3", name: "Suspend After", description: "Suspend member automatically", value: 5 },
-            { id: "4", name: "Fire After", description: "Remove member from the team after this many absences", value: 7 },
-          ],
+          rules: {
+            ClubRules: {
+              maxAbsences: 3,
+              warningAfter: 1,
+              suspendAfter: 5,
+              fireAfter: 7
+            }
+          },
           divisions: ["CPO", "Development", "Cyber", "Data Science", "Design", "Marketing", "HR"],
           loading: false,
           error: null,
@@ -99,8 +101,7 @@ export const useAdminStore = create<AdminState>()(
                 role: head.clubRole || "Unknown Role",
                 email: head.email,
                 avatar: head.profilePicture,
-                permissions: head.permissions || [],
-                permissionStatus: head.permissionStatus || "inactive",
+                membershipStatus : head.membershipStatus
               }));
 
               set({ heads: processedHeads, loading: false });
@@ -141,7 +142,14 @@ export const useAdminStore = create<AdminState>()(
               set({
                 error: error.message || "Failed to fetch rules",
                 loading: false,
-                rules: []
+                rules: {
+                  ClubRules: {
+                    maxAbsences: 3,
+                    warningAfter: 1,
+                    suspendAfter: 5,
+                    fireAfter: 7
+                  }
+                }
               });
             }
           },
@@ -151,9 +159,12 @@ export const useAdminStore = create<AdminState>()(
               const headers = await getAuthHeaders();
               await axios.patch(`${API_BASE_URL}/rules/${id}`, { value }, { headers });
               set(state => ({
-                rules: state.rules.map(rule => 
-                  rule.id === id ? { ...rule, value } : rule
-                )
+                rules: {
+                  ClubRules: {
+                    ...state.rules.ClubRules,
+                    [id]: value
+                  }
+                }
               }));
             } catch (error: any) {
               handleApiError(error);
@@ -197,11 +208,17 @@ export const useAdminStore = create<AdminState>()(
 
           banMember: async (id: string) => {
             try {
+              const payload = { emails: [id] }; 
               const headers = await getAuthHeaders();
-              await axios.post(`${API_BASE_URL}/admin/ban`, { id }, { headers });
-            } catch (error: any) {
-              handleApiError(error);
-              throw new Error(error.message || "Failed to ban member");
+              const response = await axios.post(`${API_BASE_URL}/admin/banMembers`, payload, { headers });
+              return response.data;
+            } catch (error) {
+              console.error('Ban error:', error);
+              if (axios.isAxiosError(error)) {
+                console.error('Error details:', error.response?.data);
+                throw new Error(error.response?.data?.message || 'Ban failed');
+              }
+              throw new Error('Ban failed');
             }
           },
 

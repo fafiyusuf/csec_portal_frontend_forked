@@ -1,4 +1,3 @@
-import { Url } from "url";
 // types/member.ts
 export type UserRole = 
   | 'President'
@@ -20,7 +19,7 @@ export interface Member {
   telegramHandle?: string;
   phoneNumber?: string;
   graduationYear?: string;
-  profilePicture?: string | Url | null;
+  profilePicture?: string | null;
   clubRole?: UserRole;
   division?: string;
   divisionRole?: string;

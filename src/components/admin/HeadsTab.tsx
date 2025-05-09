@@ -4,6 +4,7 @@ import { AddHeadModal } from "@/components/admin/AddHeadModal";
 import { HeadsTable } from "@/components/admin/HeadsTable";
 import Button from "@/components/ui/button";
 import { useAdminStore } from "@/stores/adminStore";
+import useMembersStore from "@/stores/membersStore";
 import type { Head } from "@/types/admin";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,6 +19,7 @@ export const HeadsTab = ({
 }) => {
   const [isAddHeadModalOpen, setIsAddHeadModalOpen] = useState(false);
   const { addHead } = useAdminStore();
+  const { members } = useMembersStore();
 
   const handleAddHead = async (headData: {
     division: string;
@@ -30,9 +32,8 @@ export const HeadsTab = ({
         name: headData.name,
         email: headData.email,
         role: 'Head',
-        avatar: `https://robohash.org/${headData.email}?set=set3`,
-        permissions: [],
-        permissionStatus: 'inactive'
+        avatar: `https://robohash.org/${headData.email}?set=set1`,
+        membershipStatus: 'active'
       });
       toast.success("Head added successfully");
       setIsAddHeadModalOpen(false);

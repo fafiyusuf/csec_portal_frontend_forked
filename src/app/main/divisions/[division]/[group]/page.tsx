@@ -54,7 +54,7 @@ export default function GroupMembersPage() {
           search: searchQuery,
           page,
           limit: 10,
-          status: statusFilter || undefined
+          membershipStatus: statusFilter || undefined
         });
 
         const storeState = useDivisionsStore.getState();

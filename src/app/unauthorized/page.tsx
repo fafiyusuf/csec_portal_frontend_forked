@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function UnauthorizedPage() {
+function UnauthorizedContent() {
   const searchParams = useSearchParams();
   const message = searchParams.get('message') || 'You don\'t have permission to access this page.';
 
@@ -30,5 +31,19 @@ export default function UnauthorizedPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UnauthorizedPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center p-8 max-w-md">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">Loading...</h1>
+        </div>
+      </div>
+    }>
+      <UnauthorizedContent />
+    </Suspense>
   );
 } 

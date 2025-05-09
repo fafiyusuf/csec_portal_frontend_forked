@@ -7,8 +7,7 @@ export interface Head {
     division: string
     role: string
     email: string
-    permissions: string[]
-    permissionStatus: 'active' | 'inactive'
+    membershipStatus : string
   }
   
   export interface Role {
@@ -18,19 +17,16 @@ export interface Head {
     permissions: string[]
   }
   
-  export interface Rule {
-    id: string
-    name: string
-    description: string
-    value: number
+  export interface Rules {
+   ClubRules : {
+      maxAbsences: number
+      warningAfter: number
+      suspendAfter: number
+      fireAfter: number
+    }
   }
   
-  export interface ClubRules {
-    maxAbsences: number
-    warningAfter: number
-    suspendAfter: number
-    fireAfter: number
-  }
   
-  export type { Member }
+  
+  export type { Member };
   

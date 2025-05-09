@@ -2,12 +2,11 @@
 
 import Button from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import Input from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAdminStore } from "@/stores/adminStore";
 import { useDivisionsStore } from "@/stores/DivisionStore";
 import useMembersStore from "@/stores/membersStore";
-import { Search } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -22,12 +21,12 @@ export const AddHeadModal = ({
 }) => {
   const { members, fetchMembers, loading: membersLoading, error: membersError } = useMembersStore();
   const { divisions, fetchDivisions, loading: divisionsLoading, error: divisionsError } = useDivisionsStore();
+  const { fetchHeads } = useAdminStore();
   const [division, setDivision] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Fetch all needed data when modal opens
   useEffect(() => {
     if (open) {
       fetchMembers({ limit: 200 }).catch(console.error);
@@ -35,19 +34,23 @@ export const AddHeadModal = ({
     }
   }, [open, fetchMembers, fetchDivisions]);
 
-  // Memoized filtered members based on search term
   const filteredMembers = useMemo(() => {
-    if (!searchTerm) {
-      return members.filter(member => member.Attendance === "Active");
-    }
-    return members.filter(member => 
-      member.Attendance === "Active" &&
-      (
-        member.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        `${member.firstName} ${member.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.clubRole?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
+    const activeMembers = members.filter(member => member.membershipStatus === "Active");
+    
+    if (!searchTerm.trim()) return activeMembers;
+
+    const term = searchTerm.toLowerCase();
+    return activeMembers.filter(member => {
+      const fullName = `${member.firstName || ''} ${member.lastName || ''}`.toLowerCase();
+      const email = member.email?.toLowerCase() || '';
+      const clubRole = member.clubRole?.toLowerCase() || '';
+
+      return (
+        fullName.includes(term) ||
+        email.includes(term) ||
+        clubRole.includes(term)
+      );
+    });
   }, [members, searchTerm]);
 
   const handleSubmit = async () => {
@@ -59,11 +62,28 @@ export const AddHeadModal = ({
     try {
       await onSave({ division, name, email });
       toast.success("Head added successfully");
+      
+      // Refresh the heads list after successful addition
+      try {
+        await fetchHeads();
+        toast.success("Heads list updated");
+      } catch (fetchError) {
+        console.error("Failed to refresh heads list:", fetchError);
+        toast.warning("Head added but failed to refresh list");
+      }
+      
       onOpenChange(false);
       resetForm();
     } catch (error) {
       toast.error("Failed to add head");
       console.error("Add head error:", error);
+      
+      // Attempt to refresh heads list even if add failed (in case partial success)
+      try {
+        await fetchHeads();
+      } catch (fetchError) {
+        console.error("Failed to refresh heads list:", fetchError);
+      }
     }
   };
 
@@ -116,18 +136,6 @@ export const AddHeadModal = ({
           {/* Member Search and Selection */}
           <div className="space-y-2">
             <Label>Member</Label>
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search members by name, email or role..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setEmail(""); // Reset selected email when searching
-                }}
-                className="pl-9 mb-2"
-              />
-            </div>
             
             {membersLoading ? (
               <div className="text-sm text-muted-foreground">Loading members...</div>

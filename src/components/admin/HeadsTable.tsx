@@ -2,8 +2,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import Button from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
 import type { Head } from "@/types/admin";
 
 export const HeadsTable = ({
@@ -41,8 +39,8 @@ export const HeadsTable = ({
               </td>
               <td className="p-4">{head.role}</td>
               <td className="p-4">
-                <Badge variant={head.permissionStatus === "active" ? "default" : "destructive"}>
-                  {head.permissionStatus}
+                <Badge variant={head.membershipStatus === "active" ? "default" : "destructive"}>
+                  {head.membershipStatus}
                 </Badge>
               </td>
              

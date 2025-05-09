@@ -6,8 +6,6 @@ export const RuleCard = ({
   title: string;
   description: string;
   value: number;
-  options: number[];
-  onChange: (value: number) => void;
 }) => {
   return (
     <div className="border rounded-lg p-4 flex justify-between">

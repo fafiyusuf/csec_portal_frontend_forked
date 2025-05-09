@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Input from "@/components/ui/input";
 import { useAdminStore } from "@/stores/adminStore";
 import useMembersStore from "@/stores/membersStore";
+import { Label } from "@radix-ui/react-label";
 import { ArrowLeft, Ban, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -18,39 +19,52 @@ export const MembersTable = ({
   onBack?: () => void;
 }) => {
   const { members, loading, error, fetchMembers } = useMembersStore();
+  const { banMember } = useAdminStore();
+  
+  // State management
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [itemsPerPage, setItemsPerPage] = useState(10);
-  const {banMember}= useAdminStore()
 
-  const filteredMembers = members?.filter((member) => {
-    const matchesSearch = searchQuery === "" ||
-      member.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      member.clubRole?.toLowerCase().includes(searchQuery.toLowerCase());
+  // Fetch members on mount
+  useEffect(() => {
+    fetchMembers().catch(err => {
+      console.error("Failed to fetch members:", err);
+    });
+  }, [fetchMembers]);
 
-    const matchesStatus = statusFilter === "all" ||
-                         member.Attendance === statusFilter;
+  // Filter members based on search and status
+  const filteredMembers = members.filter((member) => {
+    const searchLower = searchQuery.toLowerCase();
+    const matchesSearch = 
+      member.firstName?.toLowerCase().includes(searchLower) ||
+      member.lastName?.toLowerCase().includes(searchLower) ||
+      member.email?.toLowerCase().includes(searchLower) ||
+      member.clubRole?.toLowerCase().includes(searchLower);
+
+    const matchesStatus = 
+      statusFilter === "all" || 
+      member.membershipStatus?.toLowerCase() === statusFilter.toLowerCase();
 
     return matchesSearch && matchesStatus;
-  }) || [];
+  });
 
+  // Pagination calculations
   const totalItems = filteredMembers.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
   const currentMembers = filteredMembers.slice(startIndex, endIndex);
 
+  // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-    console.log(totalPages, currentPage)
-    console.log(members)
-  }, [searchQuery, statusFilter]);
+  }, [searchQuery, statusFilter, itemsPerPage]);
 
+  // Selection handlers
   const toggleMemberSelection = (email: string) => {
     setSelectedEmails((prev) =>
       prev.includes(email)
@@ -61,24 +75,33 @@ export const MembersTable = ({
 
   const toggleAllMembers = (checked: boolean) => {
     if (checked) {
-      const pageEmails = currentMembers.map(m => m.email).filter(Boolean) as string[];
+      const pageEmails = currentMembers
+        .map(m => m.email)
+        .filter((email): email is string => !!email);
       setSelectedEmails(prev => [...new Set([...prev, ...pageEmails])]);
     } else {
-      const pageEmails = currentMembers.map(m => m.email).filter(Boolean) as string[];
+      const pageEmails = currentMembers
+        .map(m => m.email)
+        .filter((email): email is string => !!email);
       setSelectedEmails(prev => prev.filter(email => !pageEmails.includes(email)));
     }
   };
 
-  const handleBanMembers = async () => {
+  // Ban members handler
+  const handleBan = async () => {
+    if (selectedEmails.length === 0) {
+      toast.warning("Please select at least one member to ban");
+      return;
+    }
+  
     try {
-      for (const id of selectedEmails) {
-        await banMember(id);
-      }
+      await Promise.all(selectedEmails.map(email => banMember(email)));
+      toast.success(`${selectedEmails.length} member(s) banned successfully`);
       setSelectedEmails([]);
-      toast.success("Members banned successfully");
-    } catch (error) {
+      await fetchMembers();
+    } catch (err) {
       toast.error("Failed to ban members");
-      console.error("Ban members error:", error);
+      console.error("Ban error:", err);
     }
   };
 
@@ -87,6 +110,7 @@ export const MembersTable = ({
 
   return (
     <div className="space-y-4">
+      {/* Header section */}
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-4">
           {onBack && (
@@ -100,7 +124,7 @@ export const MembersTable = ({
         {selectedEmails.length > 0 && (
           <Button
             variant="destructive"
-            onClick={handleBanMembers}
+            onClick={handleBan}
             className="gap-2"
           >
             <Ban className="h-4 w-4" />
@@ -109,11 +133,12 @@ export const MembersTable = ({
         )}
       </div>
 
+      {/* Search and filters */}
       <div className="flex gap-2">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search members..."
+            placeholder="Search members by name, email or role..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -128,15 +153,29 @@ export const MembersTable = ({
         </Button>
       </div>
 
+      {/* Filter panel */}
       {isFilterOpen && (
         <div className="border rounded-lg p-4 bg-muted/50">
           <h3 className="font-medium mb-2">Filters</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-           
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <select
+                className="w-full p-2 border rounded"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="banned">Banned</option>
+              </select>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Members table */}
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full">
           <thead className="bg-gray-50">
@@ -144,7 +183,7 @@ export const MembersTable = ({
               <th className="p-4 text-left w-12">
                 <Checkbox
                   checked={
-                    selectedEmails.length > 0 &&
+                    currentMembers.length > 0 &&
                     currentMembers.every(m => 
                       m.email && selectedEmails.includes(m.email)
                     )
@@ -160,61 +199,74 @@ export const MembersTable = ({
             </tr>
           </thead>
           <tbody>
-            {currentMembers.map((member) => (
-              <tr
-                key={member._id}
-                className="border-b hover:bg-gray-50"
-              >
-                <td className="p-4">
-                  <Checkbox
-                    checked={member.email ? selectedEmails.includes(member.email) : false}
-                    onCheckedChange={() => 
-                      member.email && toggleMemberSelection(member.email)
-                    }
-                    disabled={!member.email}
-                  />
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar>
-                      <AvatarImage
-                        src={String(member.profilePicture || `https://robohash.org/${member._id}?set=set3`)}
-                        alt={member.firstName || 'Member'}
-                      />
-                      <AvatarFallback>
-                        {member.firstName ? member.firstName[0] : 'M'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">
-                        {member.firstName || ''} {member.lastName || ''}
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {member.email || 'No email'}
+            {currentMembers.length > 0 ? (
+              currentMembers.map((member) => (
+                <tr
+                  key={member._id}
+                  className="border-b hover:bg-gray-50"
+                >
+                  <td className="p-4">
+                    <Checkbox
+                      checked={member.email ? selectedEmails.includes(member.email) : false}
+                      onCheckedChange={() => 
+                        member.email && toggleMemberSelection(member.email)
+                      }
+                    />
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage
+                          src={member.profilePicture?.toString() || `https://robohash.org/${member._id}?set=set1`}
+                          alt={`${member.firstName} ${member.lastName}`}
+                        />
+                        <AvatarFallback>
+                          {(member.firstName?.[0] || '') + (member.lastName?.[0] || '')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">
+                          {member.firstName} {member.lastName}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {member.email}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </td>
-                <td className="p-4">{member.clubRole || ''}</td>
-                <td className="p-4">
-                  <Badge variant={member.Attendance === "Active" ? "default" : "destructive"}>
-                    {member.Attendance || 'unknown'}
-                  </Badge>
+                  </td>
+                  <td className="p-4">{member.clubRole || '-'}</td>
+                  <td className="p-4">
+                    <Badge 
+                      variant={
+                        member.membershipStatus === "Active" ? "default" :
+                        member.membershipStatus === "Banned" ? "destructive" : "secondary"
+                      }
+                    >
+                      {member.membershipStatus}
+                    </Badge>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={4} className="p-4 text-center text-muted-foreground">
+                  No members found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
+      {/* Pagination */}
       {filteredMembers.length > 0 && (
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
           onPageChange={setCurrentPage}
-          totalItems={filteredMembers.length}
+          totalItems={totalItems}
           itemsPerPage={itemsPerPage}
-          onItemsPerPageChange={(value) => setItemsPerPage(value)}
+          onItemsPerPageChange={setItemsPerPage}
         />
       )}
     </div>

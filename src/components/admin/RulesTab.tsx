@@ -3,7 +3,7 @@
 import { MembersTable } from "@/components/admin/MembersTable";
 import { RuleCard } from "@/components/admin/RuleCard";
 import Button from "@/components/ui/button";
-import type { ClubRules, Member } from "@/types/admin";
+import type { Member, Rules } from "@/types/admin";
 import { useEffect, useState } from "react";
 
 export const RulesTab = ({
@@ -12,9 +12,9 @@ export const RulesTab = ({
   onUpdateRule,
   onBanMembers,
 }: {
-  rules: ClubRules;
+  rules: Rules;
   members: Member[];
-  onUpdateRule: (field: keyof ClubRules, value: number) => Promise<void>;
+  onUpdateRule: (field: keyof Rules, value: number) => Promise<void>;
   onBanMembers: (memberIds: string[]) => Promise<void>;
 }) => {
   const [showMembers, setShowMembers] = useState(false);
@@ -30,30 +30,22 @@ export const RulesTab = ({
             <RuleCard
               title="Max Absences"
               description="Members exceeding this are flagged for review"
-              value={rules.maxAbsences}
-              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-              onChange={(value) => onUpdateRule('maxAbsences', value)}
+              value={rules.ClubRules.maxAbsences}
             />
             <RuleCard
               title="Warning After"
               description="Members receive a warning notification"
-              value={rules.warningAfter}
-              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-              onChange={(value) => onUpdateRule('warningAfter', value)}
+              value={rules.ClubRules.warningAfter}
             />
             <RuleCard
               title="Suspend After"
               description="Member's access suspended"
-              value={rules.suspendAfter}
-              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-              onChange={(value) => onUpdateRule('suspendAfter', value)}
+              value={rules.ClubRules.suspendAfter}
             />
             <RuleCard
               title="Fire After"
               description="Member removed from division"
-              value={rules.fireAfter}
-              options={[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-              onChange={(value) => onUpdateRule('fireAfter', value)}
+              value={rules.ClubRules.fireAfter}
             />
           </div>
 
