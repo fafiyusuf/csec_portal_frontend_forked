@@ -78,9 +78,30 @@ const ProfilePicUpload = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'File size must be less than 5MB',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'File must be an image',
+          variant: 'destructive'
+        });
+        return;
+      }
+
       setProfilePicture(file);
       setFieldValue('profilePicture', file);
       
@@ -92,8 +113,14 @@ const ProfilePicUpload = () => {
     }
   };
 
+  const handleRemovePicture = () => {
+    setPreview(null);
+    setFieldValue('profilePicture', '');
+    setProfilePicture('');
+  };
+
   useEffect(() => {
-    if (typeof values.profilePicture === 'string') {
+    if (typeof values.profilePicture === 'string' && values.profilePicture) {
       const imgUrl = values.profilePicture.startsWith('http') 
         ? values.profilePicture 
         : `${process.env.NEXT_PUBLIC_API_BASE_URL}${values.profilePicture}`;
@@ -102,33 +129,51 @@ const ProfilePicUpload = () => {
   }, [values.profilePicture]);
 
   return (
-    <div className=" mb-8">
-      <div className=" gap-4">
+    <div className="mb-8">
+      <div className="gap-4">
         {preview ? (
           <div className="relative">
             <img 
               src={preview} 
               alt="Profile preview" 
               className="w-24 h-24 rounded-full object-cover border-4 border-gray-200"
-              onError={() => setPreview(null)}
+              onError={handleRemovePicture}
             />
-            <div className="absolute bottom-0 right-0 bg-white rounded-full p-1 shadow-md">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                className="h-5 w-5 text-gray-600 cursor-pointer" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
+            <div className="flex gap-2 absolute bottom-0 right-0">
+              <div 
+                className="bg-white rounded-full p-1 shadow-md cursor-pointer hover:bg-gray-100"
                 onClick={() => fileInputRef.current?.click()}
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5 text-gray-600" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <div 
+                className="bg-white rounded-full p-1 shadow-md cursor-pointer hover:bg-gray-100"
+                onClick={handleRemovePicture}
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className="h-5 w-5 text-red-500" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
             </div>
           </div>
         ) : (
           <div 
-            className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer border-4 border-dashed border-gray-300"
+            className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center cursor-pointer border-4 border-dashed border-gray-300 hover:bg-gray-100"
             onClick={() => fileInputRef.current?.click()}
           >
             <svg 
@@ -178,7 +223,7 @@ export default function ProfileEditPage() {
     email: formData.email || user?.member?.email || '',
     birthDate: formData.birthDate || user?.member?.birthDate || '',
     github: formData.github || user?.member?.github || '',
-    gender: formData.gender || user?.member?.gender || '',
+    gender: (formData.gender || user?.member?.gender || 'prefer-not-to-say') as 'male' | 'female' | 'prefer-not-to-say' | '',
     telegramHandle: formData.telegramHandle || user?.member?.telegramHandle || '',
     graduationYear: formData.graduationYear || user?.member?.graduationYear?.toString() || '',
     specialization: formData.specialization || user?.member?.specialization || '',
@@ -207,25 +252,49 @@ export default function ProfileEditPage() {
 
   const handleSubmit = async (values: any, { setSubmitting }: FormikHelpers<any>) => {
     try {
+      setSubmitting(true);
+      
+      // Validate all fields first
       await validationSchema.validate(values, { abortEarly: false });
+      
+      // Create FormData for the request
       const formData = new FormData();
-      Object.keys(values).forEach(key => {
-        if (key !== 'profilePicture' && values[key] !== undefined && values[key] !== null && values[key] !== '') {
-          formData.append(key, values[key]);
+      
+      // Format dates before sending
+      const formattedValues = {
+        ...values,
+        birthDate: values.birthDate ? new Date(values.birthDate).toISOString().split('T')[0] : '',
+        joiningDate: values.joiningDate ? new Date(values.joiningDate).toISOString().split('T')[0] : ''
+      };
+      
+      // Only append non-empty values
+      Object.keys(formattedValues).forEach(key => {
+        if (key !== 'profilePicture' && formattedValues[key] !== undefined && formattedValues[key] !== null && formattedValues[key] !== '') {
+          formData.append(key, formattedValues[key]);
         }
       });
+
+      // Handle profile picture upload
       if (values.profilePicture instanceof File) {
         formData.append('profilePicture', values.profilePicture);
+      } else if (typeof values.profilePicture === 'string' && values.profilePicture) {
+        formData.append('profilePicture', values.profilePicture);
+      }
+
+      // Get the token from the correct storage
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
 
       // First, update the profile details
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE}/members/profileDetails`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/members/profileDetails`,
         formData,
         {
           headers: {
             'Content-Type': 'multipart/form-data',
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -234,54 +303,72 @@ export default function ProfileEditPage() {
         throw new Error('No data received from server');
       }
 
-      // Then, update the user profile in the store
-      try {
-        const updatedUser = {
-          ...response.data,
-          member: {
-            ...response.data.member,
-            profilePicture: response.data.member?.profilePicture || null,
-            firstName: response.data.member?.firstName || values.firstName,
-            lastName: response.data.member?.lastName || values.lastName,
-            email: response.data.member?.email || values.email,
-            phoneNumber: response.data.member?.phoneNumber || values.phoneNumber,
-            birthDate: response.data.member?.birthDate || values.birthDate,
-            github: response.data.member?.github || values.github,
-            gender: response.data.member?.gender || values.gender,
-            telegramHandle: response.data.member?.telegramHandle || values.telegramHandle,
-            graduationYear: response.data.member?.graduationYear || values.graduationYear,
-            specialization: response.data.member?.specialization || values.specialization,
-            department: response.data.member?.department || values.department,
-            mentor: response.data.member?.mentor || values.mentor,
-            universityId: response.data.member?.universityId || values.universityId,
-            cv: response.data.member?.cv || values.cv,
-            bio: response.data.member?.bio || values.bio,
-            instagramHandle: response.data.member?.instagramHandle || values.instagram,
-            linkedinHandle: response.data.member?.linkedinHandle || values.linkedin,
-            codeforcesHandle: response.data.member?.codeforcesHandle || values.codeforces,
-            leetcodeHandle: response.data.member?.leetcodeHandle || values.leetcode,
-            createdAt: response.data.member?.createdAt || values.joiningDate,
-          }
-        };
+      // Prepare the updated user data
+      const updatedUser = {
+        ...user,
+        member: {
+          ...user?.member,
+          ...response.data.member,
+          profilePicture: response.data.member?.profilePicture || values.profilePicture,
+          firstName: response.data.member?.firstName || values.firstName,
+          lastName: response.data.member?.lastName || values.lastName,
+          email: response.data.member?.email || values.email,
+          phoneNumber: response.data.member?.phoneNumber || values.phoneNumber,
+          birthDate: response.data.member?.birthDate || formattedValues.birthDate,
+          github: response.data.member?.github || values.github,
+          gender: response.data.member?.gender || values.gender,
+          telegramHandle: response.data.member?.telegramHandle || values.telegramHandle,
+          graduationYear: response.data.member?.graduationYear || values.graduationYear,
+          specialization: response.data.member?.specialization || values.specialization,
+          department: response.data.member?.department || values.department,
+          mentor: response.data.member?.mentor || values.mentor,
+          universityId: response.data.member?.universityId || values.universityId,
+          cv: response.data.member?.cv || values.cv,
+          bio: response.data.member?.bio || values.bio,
+          instagramHandle: response.data.member?.instagramHandle || values.instagram,
+          linkedinHandle: response.data.member?.linkedinHandle || values.linkedin,
+          codeforcesHandle: response.data.member?.codeforcesHandle || values.codeforces,
+          leetcodeHandle: response.data.member?.leetcodeHandle || values.leetcode,
+          createdAt: response.data.member?.createdAt || formattedValues.joiningDate,
+        }
+      };
 
-        await useUserStore.getState().updateUserProfile(updatedUser);
-        
-        toast({ title: 'Profile updated successfully!', description: 'Your changes have been saved.' });
-        resetForm();
-        
-        // Redirect to profile page
-        router.push('/main/profile');
-      } catch (error) {
-        console.error('Failed to update user store:', error);
+      // Update user store
+      await useUserStore.getState().updateUserProfile(updatedUser);
+      
+      // Update form store with the latest data
+      updateFormData({
+        ...formattedValues,
+        profilePicture: response.data.member?.profilePicture || values.profilePicture,
+      });
+      
+      // Show success message
+      toast({ 
+        title: 'Profile updated successfully!', 
+        description: 'Your changes have been saved.',
+        variant: 'default'
+      });
+      
+      // Reset form state
+      resetForm();
+      
+      // Redirect to profile page
+      router.push('/main/profile');
+    } catch (error: unknown) {
+      console.error('Submission failed:', error);
+      
+      // Handle validation errors
+      if (error instanceof Yup.ValidationError) {
+        const errorMessages = error.inner.map(err => `${err.path}: ${err.message}`).join('\n');
         toast({ 
-          title: 'Warning', 
-          description: 'Profile was updated but there was an issue updating the local state. Please refresh the page.', 
+          title: 'Validation Error', 
+          description: errorMessages, 
           variant: 'destructive' 
         });
-        router.push('/main/profile');
+        return;
       }
-    } catch (error) {
-      console.error('Submission failed:', error);
+      
+      // Handle API errors
       if (axios.isAxiosError(error)) {
         toast({ 
           title: 'Error', 
@@ -294,6 +381,13 @@ export default function ProfileEditPage() {
           description: error.message, 
           variant: 'destructive' 
         });
+      }
+      
+      // If it's a token error, redirect to login
+      if (error instanceof Error && 
+          (error.message.includes('token') || error.message.includes('authentication'))) {
+        router.push('/auth/login');
+        return;
       }
     } finally {
       setSubmitting(false);
@@ -356,7 +450,7 @@ export default function ProfileEditPage() {
         enableReinitialize
       >
         {({ values, handleChange, errors, touched, isSubmitting, ...formik }) => (
-          <Form>
+          <Form className="space-y-6">
             {step === 1 && (
               <>
                 <div className="">
@@ -431,7 +525,6 @@ export default function ProfileEditPage() {
                     <option value="">Select Gender</option>
                     <option value="male">Male</option>
                     <option value="female">Female</option>
-                    <option value="other">Other</option>
                     <option value="prefer-not-to-say">Prefer not to say</option>
                   </Select>
                 </div>
@@ -579,6 +672,7 @@ export default function ProfileEditPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setStep(1)}
+                  disabled={isSubmitting}
                   className="dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   Back
@@ -588,18 +682,38 @@ export default function ProfileEditPage() {
                 <Button
                   type="button"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white relative"
                   onClick={() => handleNext(values)}
                 >
-                  Next
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </div>
+                  ) : (
+                    'Next'
+                  )}
                 </Button>
               ) : (
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white relative"
                 >
-                  Save Changes
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : (
+                    'Save Changes'
+                  )}
                 </Button>
               )}
             </div>

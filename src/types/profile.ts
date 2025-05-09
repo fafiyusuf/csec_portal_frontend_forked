@@ -1,5 +1,30 @@
 // components/profile/types.ts
-import { Member } from "./member"; // Assuming you have a Member type
+import { FormData } from '@/stores/formStore';
+
+export interface Member {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber: string;
+  email: string;
+  birthDate: string;
+  github: string;
+  gender: 'male' | 'female' | 'prefer-not-to-say' | '';
+  telegramHandle: string;
+  graduationYear: number | null;
+  specialization: string;
+  department: string;
+  mentor: string;
+  universityId: string | null;
+  instagramHandle: string | null;
+  linkedinHandle: string | null;
+  codeforcesHandle: string | null;
+  cv: string | null;
+  leetcodeHandle: string | null;
+  createdAt: string;
+  bio: string | null;
+  profilePicture: string | null;
+}
 
 export interface Resource {
   name: string;
@@ -7,35 +32,35 @@ export interface Resource {
 }
 
 export interface RequiredFormProps {
-  data: {
-    firstName: string;
-    lastName: string;
-    mobileNumber: string;
-    emailAddress: string;
-    dateOfBirth?: Date;
-    github: string;
-    gender: string;
-    telegramHandle: string;
-    expectedGraduationYear: string;
-    specialization: string;
-    department: string;
-    mentor: string;
-  };
+  data: Pick<FormData, 
+    | 'firstName'
+    | 'lastName'
+    | 'phoneNumber'
+    | 'email'
+    | 'birthDate'
+    | 'github'
+    | 'gender'
+    | 'telegramHandle'
+    | 'graduationYear'
+    | 'specialization'
+    | 'department'
+    | 'mentor'
+  >;
   onUpdate: (data: Partial<Member>) => void;
   onNext: () => void;
 }
 
 export interface OptionalFormProps {
-  data: {
-    universityId: string;
-    linkedinAccount: string;
-    codechefHandle: string;
-    leetcodeHandle: string;
-    instagramHandle: string;
-    cv: string;
-    joiningDate?: Date;
-    shortBio: string;
-  };
+  data: Pick<FormData,
+    | 'universityId'
+    | 'linkedin'
+    | 'codeforces'
+    | 'leetcode'
+    | 'instagram'
+    | 'cv'
+    | 'joiningDate'
+    | 'bio'
+  >;
   onUpdate: (data: Partial<Member>) => void;
   onNext: () => void;
 }

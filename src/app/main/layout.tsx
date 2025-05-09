@@ -55,11 +55,11 @@ export default function MainLayout({
   if (!isAuthenticated || !user) return null;
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full bg-gray-50 dark:bg-gray-900">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-20 lg:hidden transition-opacity duration-300"
           onClick={handleOverlayClick}
         />
       )}
@@ -73,15 +73,17 @@ export default function MainLayout({
       </div>
       
       {/* Main Content Area */}
-      <div className="flex-1 w-full lg:ml-64">
+      <div className="flex-1 w-full lg:ml-64 transition-all duration-300">
         {/* Sticky Header */}
-        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800">
+        <div className="sticky top-0 z-10 bg-white dark:bg-gray-800 shadow-sm">
           <TopHeader onMenuClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} />
         </div>
         
         {/* Page Content */}
-        <main className="p-4 sm:p-6 dark:bg-gray-900 dark:text-gray-100">
-          {children}
+        <main className="p-4 sm:p-6 md:p-8 dark:bg-gray-900 dark:text-gray-100 min-h-[calc(100vh-64px)]">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
       <Toaster position="top-right" />

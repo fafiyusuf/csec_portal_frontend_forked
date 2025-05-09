@@ -1,5 +1,6 @@
 import { Member } from '@/types/member';
 import { UserRole } from '@/utils/roles';
+import axios from 'axios';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -69,23 +70,18 @@ const updateLastSeen = async (user: User | null, token: string | null, set: any)
   if (!user || !token) return;
 
   try {
-    const response = await fetch(`${BASE_URL}/members/${user.member._id}/lastSeen`, {
-      method: 'PATCH',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ lastSeen: new Date().toISOString() }),
-    });
+    const response = await axios.patch(
+      `${BASE_URL}/api/members/lastSeen`,
+      {},
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      throw new Error(errorData?.message || `Failed to update last seen: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    if (!data || !data.member) {
-      throw new Error('Invalid response format from server');
+    if (!response.data) {
+      throw new Error('Failed to update last seen');
     }
 
     set((state: UserStore) => ({
@@ -93,7 +89,7 @@ const updateLastSeen = async (user: User | null, token: string | null, set: any)
         ...state.user!,
         member: {
           ...state.user!.member,
-          lastSeen: data.member.lastSeen
+          lastSeen: response.data.lastSeen
         }
       }
     }));
@@ -239,20 +235,30 @@ const useUserStore = create<UserStore>()(
             throw new Error('Invalid user data: missing club role');
           }
 
-          // Store tokens in both cookies and storage
+          // Store rememberMe preference
+          localStorage.setItem('rememberMe', rememberMe.toString());
+
+          // Store tokens in appropriate storage
           const storage = rememberMe ? localStorage : sessionStorage;
           storage.setItem('token', token);
           storage.setItem('refreshToken', refreshToken);
           storage.setItem('userRole', userData.member.clubRole);
           storage.setItem('user', JSON.stringify(userData));
 
-          // Set cookies with appropriate expiration
+          // Set cookies with appropriate expiration and secure flags
           const cookieOptions = rememberMe ? 
             { expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : // 30 days
             { expires: new Date(Date.now() + 24 * 60 * 60 * 1000) }; // 1 day
           
-          document.cookie = `token=${token}; path=/; ${cookieOptions.expires.toUTCString()}`;
-          document.cookie = `refreshToken=${refreshToken}; path=/; ${cookieOptions.expires.toUTCString()}`;
+          const cookieAttributes = [
+            `path=/`,
+            `expires=${cookieOptions.expires.toUTCString()}`,
+            process.env.NODE_ENV === 'production' ? 'secure' : '',
+            process.env.NODE_ENV === 'production' ? 'SameSite=Strict' : ''
+          ].filter(Boolean).join('; ');
+
+          document.cookie = `token=${token}; ${cookieAttributes}`;
+          document.cookie = `refreshToken=${refreshToken}; ${cookieAttributes}`;
 
           set({
             token,

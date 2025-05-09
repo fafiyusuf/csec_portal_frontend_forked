@@ -10,6 +10,7 @@ import { useAdminStore } from "@/stores/adminStore";
 import useMembersStore from "@/stores/membersStore";
 import { Label } from "@radix-ui/react-label";
 import { ArrowLeft, Ban, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -20,6 +21,7 @@ export const MembersTable = ({
 }) => {
   const { members, loading, error, fetchMembers } = useMembersStore();
   const { banMember } = useAdminStore();
+  const router = useRouter();
   
   // State management
   const [searchQuery, setSearchQuery] = useState("");
@@ -103,6 +105,10 @@ export const MembersTable = ({
       toast.error("Failed to ban members");
       console.error("Ban error:", err);
     }
+  };
+
+  const handleProfileClick = (memberId: string) => {
+    router.push(`/main/profile/${memberId}`);
   };
 
   if (loading) return <div className="p-4">Loading members...</div>;
@@ -215,7 +221,7 @@ export const MembersTable = ({
                   </td>
                   <td className="p-4">
                     <div className="flex items-center gap-3">
-                      <Avatar>
+                      <Avatar className="cursor-pointer" onClick={() => handleProfileClick(member._id)}>
                         <AvatarImage
                           src={member.profilePicture?.toString() || `https://robohash.org/${member._id}?set=set1`}
                           alt={`${member.firstName} ${member.lastName}`}
@@ -224,7 +230,10 @@ export const MembersTable = ({
                           {(member.firstName?.[0] || '') + (member.lastName?.[0] || '')}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div 
+                        className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => handleProfileClick(member._id)}
+                      >
                         <div className="font-medium">
                           {member.firstName} {member.lastName}
                         </div>

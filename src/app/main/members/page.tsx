@@ -54,6 +54,8 @@ export default function MembersPage() {
 
   const userStore = useUserStore();
 
+  const router = useRouter();
+
   useEffect(() => {
     fetchMembers({
       search: searchQuery,
@@ -127,23 +129,7 @@ export default function MembersPage() {
       });
     }
   };
-  const router = useRouter();
-  const handleProfileClick = async (memberId: string) => {
-    // Update lastSeen for the clicked member
-    if (memberId !== userStore.user?.member?._id) {
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/members/${memberId}/lastSeen`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${userStore.token}`,
-          },
-          body: JSON.stringify({ lastSeen: new Date().toISOString() }),
-        });
-      } catch (error) {
-        console.error('Failed to update last seen:', error);
-      }
-    }
+  const handleProfileClick = (memberId: string) => {
     router.push(`/main/members/${memberId}`);
   };
   const handleDeleteMember = async () => {
@@ -290,7 +276,7 @@ export default function MembersPage() {
                 members?.map((member) => (
                   <TableRow key={member._id} className="dark:border-gray-800 dark:hover:bg-gray-800">
                     <TableCell className="font-medium flex items-center gap-2 dark:text-white">
-                      <Avatar>
+                      <Avatar className="cursor-pointer" onClick={() => handleProfileClick(member._id)}>
                         <AvatarImage 
                           src={member.profilePicture ? 
                             (String(member.profilePicture).startsWith('https://res.cloudinary.com') ? 
@@ -298,7 +284,6 @@ export default function MembersPage() {
                               `https://res.cloudinary.com/dqgzhdegr/image/upload/${String(member.profilePicture)}`)
                             : `https://robohash.org/${member._id}?set=set3`}
                           alt={member.firstName || 'Member'} 
-                          onClick={() => handleProfileClick(member._id)}
                           className="cursor-pointer"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
@@ -309,7 +294,10 @@ export default function MembersPage() {
                           {getInitials(member.firstName)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
+                      <div 
+                        className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                        onClick={() => handleProfileClick(member._id)}
+                      >
                         <div>{[member.firstName, member.lastName].filter(Boolean).join(' ') || 'Unnamed Member'}</div>
                         <div className="text-xs text-muted-foreground dark:text-gray-400">
                           {member.clubRole || 'No role specified'}

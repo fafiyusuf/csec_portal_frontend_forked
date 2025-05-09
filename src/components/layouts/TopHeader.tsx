@@ -41,7 +41,11 @@ const TopHeader: React.FC<TopHeaderProps> = ({ onMenuClick }) => {
 
   const handleNavigation = (path: string) => {
     setIsDropdownOpen(false);
-    router.push(path);
+    if (path === "/main/profile") {
+      router.push(`/main/profile`);
+    } else {
+      router.push(path);
+    }
   };
 
   const handleLogout = () => {
@@ -77,7 +81,7 @@ const TopHeader: React.FC<TopHeaderProps> = ({ onMenuClick }) => {
 
   return (
     <header className="bg-white dark:bg-gray-800 shadow-sm py-4 px-4 lg:px-6 border-b border-gray-200 dark:border-gray-700">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="flex items-center justify-between gap-4">
         {/* Left - Menu Button and Greeting */}
         <div className="flex items-center gap-4">
           <button
@@ -96,77 +100,74 @@ const TopHeader: React.FC<TopHeaderProps> = ({ onMenuClick }) => {
           </div>
         </div>
 
-        {/* Right - Search, Notification and Profile */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-          
-
-
-          <div className="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-start">
-            {/* Notification */}
-    
-
-            {/* Profile Dropdown */}
-            <div className="relative">
-              <button
-                className="flex items-center gap-2"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
-                <Avatar size="md" robohashSet="set3">
-                  <Avatar.Image
-                    src={
-                      (typeof user?.member?.profilePicture === 'string' ? user.member.profilePicture : undefined) ||
-                      `https://robohash.org/${user?.member?._id || "default"}?set=set3&size=100x100`
-                    }
-                    alt="User Avatar"
-                    identifier={user?.member?._id || "default"}
-                  />
-                  <Avatar.Fallback className="dark:bg-gray-600 dark:text-white">
-                    {user?.member?.firstName?.[0]}
-                    {user?.member?.lastName?.[0]}
-                  </Avatar.Fallback>
-                </Avatar>
-                <div className="text-left hidden sm:block">
-                  <div className="flex items-center">
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 dark:text-white">
-                        {user?.member?.firstName || "User"}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {user?.member?.clubRole || "Member"}
-                      </p>
-                    </div>
-                    <FiChevronDown
-                      className={`h-4 w-4 ml-1 text-gray-500 dark:text-gray-400 transition-transform ${
-                        isDropdownOpen ? "rotate-180" : ""
-                      }`}
-                    />
-                  </div>
+        {/* Right - Profile */}
+        <div className="flex items-center gap-4">
+          {/* Profile Dropdown */}
+          <div className="relative">
+            <button
+              className="flex items-center gap-2"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            >
+              <Avatar size="md" robohashSet="set3">
+                <Avatar.Image
+                  src={
+                    (typeof user?.member?.profilePicture === 'string' ? user.member.profilePicture : undefined) ||
+                    `https://robohash.org/${user?.member?._id || "default"}?set=set3&size=100x100`
+                  }
+                  alt="User Avatar"
+                  identifier={user?.member?._id || "default"}
+                />
+                <Avatar.Fallback className="dark:bg-gray-600 dark:text-white">
+                  {user?.member?.firstName?.[0]}
+                  {user?.member?.lastName?.[0]}
+                </Avatar.Fallback>
+              </Avatar>
+              
+              <div className="hidden sm:flex items-center">
+                <div 
+                  className="cursor-pointer"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNavigation("/main/profile");
+                  }}
+                >
+                  <p className="text-sm font-semibold text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                    {user?.member?.firstName || "User"}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {user?.member?.clubRole || "Member"}
+                  </p>
                 </div>
-              </button>
+                <FiChevronDown
+                  className={`h-4 w-4 ml-1 text-gray-500 dark:text-gray-400 transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </div>
+            </button>
 
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-10">
-                  <button
-                    onClick={() => handleNavigation("/main/profile")}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    Profile
-                  </button>
-                  <button
-                    onClick={() => handleNavigation("/main/settings")}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-                  >
-                    Settings
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-200 dark:hover:bg-red-500/20"
-                  >
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
+            {isDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700 z-10">
+                <button
+                  onClick={() => handleNavigation("/main/profile")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Profile
+                </button>
+                <button
+                  onClick={() => handleNavigation("/main/settings")}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Settings
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-red-200 dark:hover:bg-red-500/20"
+                >
+                  Sign out
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -23,8 +23,8 @@ export default function LoginForm({
         <label className="text-xs text-gray-600">Email Address</label>
         <input
           type="email"
-          placeholder="robertallen@example.com"
-          className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="member@example.com"
+          className="mt-1 w-full px-4 py-2 border dark:bg-gray-900 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -36,7 +36,7 @@ export default function LoginForm({
         <input
           type={showPassword ? 'text' : 'password'}
           placeholder="••••••••"
-          className="mt-1 w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="mt-1 w-full px-4 py-2 border border-gray-300 dark:bg-gray-900 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -68,7 +68,7 @@ export default function LoginForm({
           onChange={() => setRememberMe(!rememberMe)}
           className="h-4 w-4 text-blue-600"
         />
-        <label htmlFor="rememberMe" className="text-sm text-gray-700">
+        <label htmlFor="rememberMe" className="text-sm text-gray-500">
           Remember Me
         </label>
       </div>

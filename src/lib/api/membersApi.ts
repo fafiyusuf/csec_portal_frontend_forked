@@ -25,7 +25,21 @@ const apiClient = axios.create({
 const getAuthStorage = () => {
   if (typeof window === 'undefined') return null;
   const rememberMe = localStorage.getItem('rememberMe') === 'true';
-  return rememberMe ? localStorage : sessionStorage;
+  const storage = rememberMe ? localStorage : sessionStorage;
+  
+  // Verify storage has required items
+  const hasToken = storage.getItem('token');
+  const hasRefreshToken = storage.getItem('refreshToken');
+  
+  if (!hasToken || !hasRefreshToken) {
+    // If items are missing, try the other storage
+    const otherStorage = rememberMe ? sessionStorage : localStorage;
+    if (otherStorage.getItem('token') && otherStorage.getItem('refreshToken')) {
+      return otherStorage;
+    }
+  }
+  
+  return storage;
 };
 
 // Request interceptor to add auth token

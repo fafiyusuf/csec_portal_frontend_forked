@@ -7,6 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/cards
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import type { Member } from "@/types/member"
 import { Edit, MoreVertical, Trash } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 interface MemberCardProps {
   member: Member
@@ -17,6 +18,12 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: MemberCardProps) {
+  const router = useRouter()
+
+  const handleProfileClick = (memberId: string) => {
+    router.push(`/main/profile/${memberId}`)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "active":
@@ -47,7 +54,10 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
       </CardHeader>
       <CardContent className="pt-0 -mt-6">
         <div className="flex flex-col items-center">
-          <Avatar className="h-16 w-16 border-4 border-background">
+          <Avatar 
+            className="h-16 w-16 border-4 border-background cursor-pointer"
+            onClick={() => handleProfileClick(member._id)}
+          >
             <AvatarImage 
               src={member.profilePicture ? 
                 (String(member.profilePicture).startsWith('https://res.cloudinary.com') ? 
@@ -58,7 +68,12 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
             />
             <AvatarFallback>{getInitials(`${member.firstName} ${member.lastName}`)}</AvatarFallback>
           </Avatar>
-          <h3 className="mt-2 font-semibold text-lg">{`${member.firstName} ${member.lastName}`}</h3>
+          <h3 
+            className="mt-2 font-semibold text-lg cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+            onClick={() => handleProfileClick(member._id)}
+          >
+            {`${member.firstName} ${member.lastName}`}
+          </h3>
           <p className="text-sm text-muted-foreground">{member.clubRole}</p>
 
           <div className="grid grid-cols-2 gap-2 w-full mt-4 text-sm">

@@ -29,22 +29,22 @@ const StatsCard: React.FC<StatsCardProps> = ({
   percentageBgColor
 }) => {
   return (
-    <div className="bg-white p-6 rounded-sm shadow-md w-64 h-40  dark:bg-gray-800  dark:text-white">
+    <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md w-full h-auto min-h-[160px] dark:bg-gray-800 dark:text-white">
       <div className='flex flex-row'>
         <div className={`${iconBgColor} w-[40px] h-[40px] rounded-md flex items-center justify-center`}>
           {React.cloneElement(icon as React.ReactElement, { className: `${iconColor} text-lg` })}
         </div>
-        <div className="text-black text-sm font-medium ml-3 mt-2  dark:text-white">{title}</div>
+        <div className="text-black text-sm font-medium ml-3 mt-2 dark:text-white">{title}</div>
       </div>
 
       <div className='flex flex-row justify-between items-center mt-4'>
-        <h1 className="text-3xl font-bold text-black   dark:text-white">{value}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-black dark:text-white">{value}</h1>
         <div className={`flex flex-row gap-1 ${percentageBgColor} px-2 py-1 rounded-md`}>
          
         </div>
       </div>
       
-      <div className="text-gray-400 text-xs mt-4  dark:text-white">Update: {updateDate}</div>
+      <div className="text-gray-400 text-xs mt-4 dark:text-white">Update: {updateDate}</div>
     </div>
   );
 };
@@ -142,7 +142,7 @@ const StatsPage = () => {
   });
 
   return (
-    <div className="grid sm:grid-cols-2 w-[550px] gap-3 m-6  dark:bg-gray-800  dark:text-white">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-7xl mx-auto p-4 dark:bg-gray-800 dark:text-white">
       <StatsCard 
         title="Total Members"
         value={totalMembers ?? 'Loading...'}

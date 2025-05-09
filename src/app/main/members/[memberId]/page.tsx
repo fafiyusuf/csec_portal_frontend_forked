@@ -9,14 +9,20 @@ import RequiredInfo from '@/components/profile/requiredinfo';
 import { useUserStore } from '@/stores/userStore';
 import { Member } from '@/types/member';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiInfo, FiUser as FiProfile, FiInfo as FiRequired } from 'react-icons/fi';
 import { HiOutlineDocumentText } from 'react-icons/hi';
 import { LuClipboardList } from 'react-icons/lu';
 import { MdEventAvailable } from 'react-icons/md';
 
-const MemberProfilePage = (props: { params: Promise<{ memberId: string }> }) => {
-  const { memberId } = React.use(props.params);
+interface MemberProfilePageProps {
+  params: {
+    memberId: string;
+  };
+}
+
+const MemberProfilePage = ({ params }: MemberProfilePageProps) => {
+  const { memberId } = params;
   const router = useRouter();
   const [activeView, setActiveView] = useState<'profile' | 'attendance' | 'progress' | 'headsup'>('profile');
   const [activeTab, setActiveTab] = useState<'required' | 'optional'>('required');

@@ -4,6 +4,7 @@
 import cse from "@/assets/logo.svg";
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
+import { X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -74,33 +75,37 @@ export default function Sidebar({ isMobileMenuOpen, onClose }: SidebarProps) {
   if (!isMounted) return null;
 
   return (
-    <aside className={`h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-transform duration-300 ease-in-out ${
+    <aside className={`fixed lg:static h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transform transition-all duration-300 ease-in-out ${
       isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
     }`}>
       <div className="flex flex-col h-full">
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200 dark:border-gray-700">
           <Link href="/main/dashboard" className="flex items-center space-x-2">
-            <Image src={cse} alt="CSEC Logo" width={32} height={32} />
-            <span className="text-xl font-bold text-gray-800 dark:text-white">CSEC Portal</span>
+            <Image src={cse} alt="CSEC Logo" width={32} height={32} className="w-8 h-8 sm:w-10 sm:h-10" />
+            <span className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white">CSEC Portal</span>
           </Link>
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <X className="w-6 h-6 text-gray-500 dark:text-gray-400" />
+          </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4">
+        <nav className="flex-1 overflow-y-auto py-4 px-2">
           <ul className="space-y-1">
             {filteredNavItems.map((item) => (
               <li key={item.href}>
                 <Link
                   href={item.href}
-                  className={`flex items-center px-4 py-2 text-sm font-medium ${
+                  className={`flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors ${
                     isActive(item.href)
                       ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                       : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                   onClick={() => {
-                    // Close mobile menu when a link is clicked
                     if (window.innerWidth < 1024) {
-                      const event = new Event('click');
-                      document.dispatchEvent(event);
+                      onClose();
                     }
                   }}
                 >
@@ -113,31 +118,29 @@ export default function Sidebar({ isMobileMenuOpen, onClose }: SidebarProps) {
         </nav>
 
         <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-          <div className="mt-4 md:mt-6 mb-2 md:mb-4">
-            <div className="flex items-center justify-between p-1 md:p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-              <button
-                onClick={() => setTheme('light')}
-                className={`flex items-center justify-center w-full py-1 md:py-2 px-2 md:px-4 rounded-md text-sm md:text-base ${
-                  theme === 'light' 
-                    ? 'bg-[#003087] text-white' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <FiSun className="mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Light</span>
-              </button>
-              <button
-                onClick={() => setTheme('dark')}
-                className={`flex items-center justify-center w-full py-1 md:py-2 px-2 md:px-4 rounded-md text-sm md:text-base ${
-                  theme === 'dark' 
-                    ? 'bg-[#003087] text-white' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                <GoMoon className="mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Dark</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-between p-1 rounded-lg bg-gray-100 dark:bg-gray-700">
+            <button
+              onClick={() => setTheme('light')}
+              className={`flex items-center justify-center w-full py-2 px-3 rounded-md text-sm transition-colors ${
+                theme === 'light' 
+                  ? 'bg-[#003087] text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <FiSun className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="ml-2 hidden sm:inline">Light</span>
+            </button>
+            <button
+              onClick={() => setTheme('dark')}
+              className={`flex items-center justify-center w-full py-2 px-3 rounded-md text-sm transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-[#003087] text-white' 
+                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+            >
+              <GoMoon className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="ml-2 hidden sm:inline">Dark</span>
+            </button>
           </div>
         </div>
       </div>

@@ -95,7 +95,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   const cleanedProfilePicture = cleanCloudinaryUrl(profilePicture);
 
   return (
-    <div className="relative bg-blue-950 dark:bg-gray-900 rounded-lg shadow-sm mb-6 overflow-hidden">
+    <div className="relative bg-blue-950 dark:bg-gray-900 rounded-lg shadow-sm mb-4 overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0 opacity-20 blur-sm">
         <Image 
@@ -110,44 +110,45 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       {/* Edit Button */}
       {isOwnProfile && (
         <div
-          className="absolute top-4 right-4 z-50 p-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors cursor-pointer"
+          className="absolute top-2 right-2 z-50 p-1.5 bg-red-500 rounded-full hover:bg-red-600 transition-colors cursor-pointer"
           onClick={handleEditClick}
         >
-          <FiEdit className="text-white text-2xl" />
+          <FiEdit className="text-white text-lg" />
         </div>
       )}
       
-      <div className="relative flex items-end">
-        <Avatar className="border-6 border-white shadow-lg w-32 h-32">
-          <AvatarImage 
-            src={cleanedProfilePicture || getRobohashUrl(id)}
-            alt={fullName}
-            className="rounded-full object-cover"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = getRobohashUrl(id);
-            }}
-          />
-          <AvatarFallback className="bg-gray-100 dark:bg-gray-700">
-            {getInitials(fullName)}
-          </AvatarFallback>
-        </Avatar>
-        <div className="absolute -bottom-2 right-0 bg-white dark:bg-gray-700 rounded-full p-1 shadow-md">
-          {/* Online status indicator */}
-          <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+      <div className="relative flex flex-col sm:flex-row items-center sm:items-end gap-4 p-4">
+        <div className="relative">
+          <Avatar className="border-4 border-white shadow-lg w-24 h-24 sm:w-28 sm:h-28">
+            <AvatarImage 
+              src={cleanedProfilePicture || getRobohashUrl(id)}
+              alt={fullName}
+              className="rounded-full object-cover"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = getRobohashUrl(id);
+              }}
+            />
+            <AvatarFallback className="bg-gray-100 dark:bg-gray-700">
+              {getInitials(fullName)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-700 rounded-full p-1 shadow-md">
+            <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+          </div>
         </div>
-      </div>
         
-      <div className="ml-6 mb-4">
-        <h2 className="text-3xl font-bold text-white dark:text-gray-100">{fullName}</h2>
-        <div className="flex items-center mt-2 space-x-4">
-          <span className="text-lg text-white dark:text-gray-300 bg-blue-900 dark:bg-gray-800 px-3 py-1 rounded-full">
-            {role}
-          </span>
-          <span className={`text-sm px-2 py-1 rounded flex items-center gap-2 ${isOnline ? 'text-green-500' : 'text-white dark:text-gray-300'} bg-blue-900 dark:bg-gray-800`}>
-            <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
-            {isOnline ? 'Online' : `Last seen: ${lastSeenTime}`}
-          </span>
+        <div className="flex flex-col items-center sm:items-start">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white dark:text-gray-100">{fullName}</h2>
+          <div className="flex flex-wrap items-center gap-2 mt-1">
+            <span className="text-sm sm:text-base text-white dark:text-gray-300 bg-blue-900 dark:bg-gray-800 px-2 py-0.5 rounded-full">
+              {role}
+            </span>
+            <span className={`text-xs sm:text-sm px-2 py-0.5 rounded flex items-center gap-1.5 ${isOnline ? 'text-green-500' : 'text-white dark:text-gray-300'} bg-blue-900 dark:bg-gray-800`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${isOnline ? 'bg-green-500' : 'bg-gray-400'}`} />
+              {isOnline ? 'Online' : `Last seen: ${lastSeenTime}`}
+            </span>
+          </div>
         </div>
       </div>
     </div>

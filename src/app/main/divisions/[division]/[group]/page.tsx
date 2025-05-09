@@ -126,6 +126,10 @@ export default function GroupMembersPage() {
 
   const canManage = user?.member?.clubRole && canManageMembers(user.member.clubRole, divisionName);
 
+  const handleProfileClick = (memberId: string) => {
+    router.push(`/main/profile/${memberId}`);
+  };
+
   // Debug logging for render
   const debugInfo = {
     membersCount: members.length,
@@ -247,7 +251,10 @@ export default function GroupMembersPage() {
                       <TableRow key={member._id}>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <Avatar className="h-8 w-8">
+                            <Avatar 
+                              className="h-8 w-8 cursor-pointer" 
+                              onClick={() => handleProfileClick(member._id)}
+                            >
                               <AvatarImage
                                 src={`https://robohash.org/${member.email}.png?set=set3&size=100x100`}
                                 alt={`${member.firstName} ${member.lastName}'s profile`}
@@ -257,7 +264,12 @@ export default function GroupMembersPage() {
                                 {member.firstName?.charAt(0).toUpperCase()}
                               </AvatarFallback>
                             </Avatar>
-                            <span>{`${member.firstName} ${member.lastName}`}</span>
+                            <span 
+                              className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                              onClick={() => handleProfileClick(member._id)}
+                            >
+                              {`${member.firstName} ${member.lastName}`}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell>{member.email}</TableCell>

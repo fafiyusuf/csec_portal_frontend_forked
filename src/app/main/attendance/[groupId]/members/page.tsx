@@ -160,6 +160,10 @@ export default function MembersAttendancePage() {
     setFilterExcused((prev) => (prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]))
   }
 
+  const handleProfileClick = (memberId: string) => {
+    router.push(`/main/members/${memberId}`);
+  };
+
   if (!user?.member?.clubRole || (user.member.clubRole !== 'President' && user.member.clubRole !== 'Vice President' && !isDivisionHead(user.member.clubRole as UserRole))) {
     return (
       <div className="p-4 md:p-6">
@@ -309,7 +313,10 @@ export default function MembersAttendancePage() {
                       <tr key={member._id} className="border-t">
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <Avatar>
+                            <Avatar 
+                              className="cursor-pointer"
+                              onClick={() => handleProfileClick(member._id)}
+                            >
                               <AvatarImage
                                 src={`https://robohash.org/${member._id}?set=set3&size=100x100`}
                                 alt={member.firstName || "Member"}
@@ -317,7 +324,10 @@ export default function MembersAttendancePage() {
                               />
                               <AvatarFallback>{member.firstName ? member.firstName.charAt(0) : "M"}</AvatarFallback>
                             </Avatar>
-                            <div>
+                            <div 
+                              className="cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
+                              onClick={() => handleProfileClick(member._id)}
+                            >
                               <p className="font-medium">
                                 {member.firstName && member.lastName
                                   ? `${member.firstName} ${member.lastName}`
