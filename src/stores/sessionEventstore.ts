@@ -1,15 +1,15 @@
-import { create } from 'zustand';
 import {
-  getSessions,
-  getEvents,
-  createSession,
-  createEvent,
-  updateSession,
-  updateEvent,
-  deleteSessionById,
-  deleteEventById,
+    createEvent,
+    createSession,
+    deleteEventById,
+    deleteSessionById,
+    getEvents,
+    getSessions,
+    updateEvent,
+    updateSession,
 } from '@/lib/api/sessionEventApi';
-import { Session, Event } from '@/types/eventSession';
+import { Event, Session } from '@/types/eventSession';
+import { create } from 'zustand';
 
 interface SessionEventStore {
   sessions: Session[];
@@ -99,10 +99,17 @@ export const useSessionEventStore = create<SessionEventStore>((set) => ({
 
   addEvent: async (data: Partial<Event>): Promise<void> => {
     try {
-      await createEvent(data);
-      console.log('Event created successfully');
+      const response = await createEvent(data);
+      if (!response) {
+        throw new Error('No response from server');
+      }
+      console.log('Event created successfully:', response);
+      // Refresh the events list after successful creation
+      const currentPage = Math.ceil((useSessionEventStore.getState().events.length + 1) / 8);
+      await useSessionEventStore.getState().fetchEvents(currentPage, 8);
     } catch (err) {
-      console.error('Failed to create event', err);
+      console.error('Failed to create event:', err);
+      throw err; // Re-throw to handle in the UI
     }
   },
 

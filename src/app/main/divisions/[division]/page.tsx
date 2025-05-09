@@ -166,6 +166,9 @@ export default function DivisionDetailPage() {
                   status: member.membershipStatus || 'unknown',
                   profilePicture: member.profilePicture?.toString()
                 })) || []}
+                onAddMember={() => {
+                  setShowAddGroupDialog(true);
+                }}
               />
             ))}
           </div>

@@ -1,6 +1,7 @@
 // components/Sidebar.tsx
 'use client';
 
+import cse from "@/assets/logo.svg";
 import { useSettingsStore } from '@/stores/settingsStore';
 import { useUserStore } from '@/stores/userStore';
 import Image from 'next/image';
@@ -8,10 +9,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import {
-    FiLayers,
-    FiSettings,
-    FiSun,
-    FiUsers,
+  FiLayers,
+  FiSettings,
+  FiSun,
+  FiUsers,
 } from 'react-icons/fi';
 import { GoMoon } from 'react-icons/go';
 import { HiOutlineUsers } from "react-icons/hi2";
@@ -79,7 +80,7 @@ export default function Sidebar({ isMobileMenuOpen, onClose }: SidebarProps) {
       <div className="flex flex-col h-full">
         <div className="flex items-center justify-center h-16 border-b border-gray-200 dark:border-gray-700">
           <Link href="/main/dashboard" className="flex items-center space-x-2">
-            <Image src="@/assets/logo.svg" alt="CSEC Logo" width={32} height={32} />
+            <Image src={cse} alt="CSEC Logo" width={32} height={32} />
             <span className="text-xl font-bold text-gray-800 dark:text-white">CSEC Portal</span>
           </Link>
         </div>

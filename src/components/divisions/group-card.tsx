@@ -42,6 +42,7 @@ export function GroupCard({
 
   // Get initials for avatar fallback
   const getInitials = (name: string) => {
+    if (!name) return '';
     return name
       .split(' ')
       .map(word => word[0])
@@ -66,6 +67,9 @@ export function GroupCard({
       return null;
     }
   };
+
+  // Ensure members is always an array
+  const safeMembers = Array.isArray(members) ? members : [];
 
   return (
     <Card className="bg-white dark:bg-gray-800 dark:border dark:border-gray-700 hover:shadow-md transition-shadow">
@@ -94,16 +98,16 @@ export function GroupCard({
           </div>
         </div>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          {members.length} member{members.length !== 1 ? 's' : ''}
+          {memberCount} member{memberCount !== 1 ? 's' : ''}
         </p>
       </CardHeader>
       <CardContent>
         <div className="space-y-2">
-          {members && members.length > 0 ? (
+          {safeMembers.length > 0 ? (
             <>
-              {members.slice(0, 5).map((member) => {
+              {safeMembers.slice(0, 5).map((member) => {
                 const profilePictureUrl = getProfilePictureUrl(member.profilePicture);
-                const robohashUrl = getRobohashUrl(member._id);
+                const robohashUrl = getRobohashUrl(member.email);
                 
                 return (
                   <div
@@ -117,10 +121,9 @@ export function GroupCard({
                           <AvatarImage 
                             src={profilePictureUrl} 
                             alt={member.name}
-                            onError={() => {
-                              // If profile picture fails, use robohash
-                              const img = document.querySelector(`[data-member-id="${member._id}"] img`) as HTMLImageElement;
-                              if (img) img.src = robohashUrl;
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              img.src = robohashUrl;
                             }}
                           />
                         ) : (
@@ -133,7 +136,7 @@ export function GroupCard({
                           {getInitials(member.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="space-y-1">
+                      <div>
                         <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{member.name}</p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">{member.email}</p>
                       </div>
@@ -142,12 +145,12 @@ export function GroupCard({
                   </div>
                 );
               })}
-              {members.length > 5 && (
+              {safeMembers.length > 5 && (
                 <Link
                   href={`/main/divisions/${encodedDivision}/${encodedGroup}`}
                   className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline flex items-center justify-center pt-2"
                 >
-                  View all {members.length} members
+                  View all {safeMembers.length} members
                 </Link>
               )}
             </>

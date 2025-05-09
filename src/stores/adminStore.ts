@@ -39,6 +39,20 @@ interface AdminState {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
 
+const handleApiError = (error: any) => {
+  if (axios.isAxiosError(error)) {
+    if (error.response?.status === 403) {
+      window.location.href = `/unauthorized?message=${encodeURIComponent(error.response.data?.message || 'You do not have permission to access this resource')}`;
+      return;
+    }
+    if (error.response?.status === 401) {
+      window.location.href = `/auth/login?from=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+  }
+  throw error;
+};
+
 export const useAdminStore = create<AdminState>()(
   devtools(
     persist(
@@ -50,7 +64,10 @@ export const useAdminStore = create<AdminState>()(
           if (!headers) {
             await refreshSession();
             headers = getAuthHeader();
-            if (!headers) throw new Error("Authentication failed");
+            if (!headers) {
+              window.location.href = `/auth/login?from=${encodeURIComponent(window.location.pathname)}`;
+              throw new Error("Authentication failed");
+            }
           }
           return headers;
         };
@@ -73,7 +90,7 @@ export const useAdminStore = create<AdminState>()(
             set({ loading: true, error: null });
             try {
               const headers = await getAuthHeaders();
-              const response = await axios.get(`${API_BASE_URL}/members/heads`, { headers },);
+              const response = await axios.get(`${API_BASE_URL}/members/heads`, { headers });
               
               const processedHeads = response.data.heads.map((head: any) => ({
                 id: head._id,
@@ -88,6 +105,7 @@ export const useAdminStore = create<AdminState>()(
 
               set({ heads: processedHeads, loading: false });
             } catch (error: any) {
+              handleApiError(error);
               set({
                 error: error.message || "Failed to fetch heads",
                 loading: false,
@@ -103,6 +121,7 @@ export const useAdminStore = create<AdminState>()(
               const response = await axios.get(`${API_BASE_URL}/admin/permissions`, { headers });
               set({ roles: response.data, loading: false });
             } catch (error: any) {
+              handleApiError(error);
               set({
                 error: error.message || "Failed to fetch roles",
                 loading: false,
@@ -118,6 +137,7 @@ export const useAdminStore = create<AdminState>()(
               const response = await axios.get(`${API_BASE_URL}/rules`, { headers });
               set({ rules: response.data, loading: false });
             } catch (error: any) {
+              handleApiError(error);
               set({
                 error: error.message || "Failed to fetch rules",
                 loading: false,
@@ -136,6 +156,7 @@ export const useAdminStore = create<AdminState>()(
                 )
               }));
             } catch (error: any) {
+              handleApiError(error);
               throw new Error(error.message || "Failed to update rule");
             }
           },
@@ -145,7 +166,8 @@ export const useAdminStore = create<AdminState>()(
               const headers = await getAuthHeaders();
               const response = await axios.post(`${API_BASE_URL}/admin/heads`, headData, { headers });
               return response.data;
-            } catch (error) {
+            } catch (error: any) {
+              handleApiError(error);
               console.error('Add head error:', error);
               throw error;
             }
@@ -165,6 +187,7 @@ export const useAdminStore = create<AdminState>()(
                 loading: false
               }));
             } catch (error: any) {
+              handleApiError(error);
               set({
                 error: error.message || "Failed to add role",
                 loading: false
@@ -177,6 +200,7 @@ export const useAdminStore = create<AdminState>()(
               const headers = await getAuthHeaders();
               await axios.post(`${API_BASE_URL}/admin/ban`, { id }, { headers });
             } catch (error: any) {
+              handleApiError(error);
               throw new Error(error.message || "Failed to ban member");
             }
           },
@@ -191,6 +215,7 @@ export const useAdminStore = create<AdminState>()(
                 )
               }));
             } catch (error: any) {
+              handleApiError(error);
               throw new Error(error.message || "Failed to update head");
             }
           },
@@ -205,6 +230,7 @@ export const useAdminStore = create<AdminState>()(
                 )
               }));
             } catch (error: any) {
+              handleApiError(error);
               throw new Error(error.message || "Failed to update role");
             }
           },

@@ -1,5 +1,5 @@
+import { Event, Session } from '@/types/eventSession';
 import axios from 'axios';
-import { Session, Event } from '@/types/eventSession';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE
 

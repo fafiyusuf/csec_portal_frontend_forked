@@ -53,34 +53,56 @@ apiClient.interceptors.response.use(
   }
 );
 
+interface GroupMembersResponse {
+  currentPage: number;
+  totalPages: number;
+  totalGroupMembers: number;
+  groupMembers: any[];
+}
+
 export const divisionsApi = {
   getAllDivisions: async (): Promise<string[]> => {
     try {
       const response = await apiClient.get("/divisions/allDivisions");
-      return response.data.divisions || [];
+      console.log("API Response:", response.data);
+      if (!response.data.divisions) {
+        throw new Error("Invalid response format from server");
+      }
+      return response.data.divisions;
     } catch (error) {
       console.error("Division fetch error:", error);
       throw error;
     }
   },
 
-  getDivisionGroups: async (divisionName: string): Promise<string[]> => {
+  getDivisionGroups: async (divisionName: string): Promise<any> => {
     try {
       const response = await apiClient.get(
         `/divisions/getGroups/${encodeURIComponent(divisionName)}`
       );
-      return response.data.groups || [];
+      return {
+        groups: response.data.groups || [],
+        groupMemberCounts: response.data.groupMemberCounts || {},
+        totalMembers: response.data.totalMembers || 0
+      };
     } catch (error) {
       console.error("Groups fetch error:", error);
-      return [];
+      return { groups: [], groupMemberCounts: {}, totalMembers: 0 };
     }
   },
 
   getGroupMembers: async (
     division: string,
     group: string,
-    filters: { search?: string; page?: number; limit?: number; status?: string } = {}
-  ): Promise<any> => {
+    filters: { 
+      search?: string; 
+      page?: number; 
+      limit?: number; 
+      attendance?: string;
+      membershipStatus?: string;
+      campusStatus?: string;
+    } = {}
+  ): Promise<GroupMembersResponse> => {
     try {
       console.log(`[API] Starting request for members:`, {
         division,
@@ -89,40 +111,30 @@ export const divisionsApi = {
         url: `${API_BASE}/groups/getMembers`
       });
 
-      const response = await apiClient.get("/groups/getMembers", {
-        params: {
-          division,
-          group,
-          ...filters
-        },
+      const params = new URLSearchParams({
+        division: division,
+        group: group,
+        search: filters.search || '',
+        attendance: filters.attendance || '',
+        membershipStatus: filters.membershipStatus || '',
+        campusStatus: filters.campusStatus || '',
+        page: filters.page?.toString() || '1',
+        limit: filters.limit?.toString() || '10'
       });
+
+      const response = await apiClient.get(`/groups/getMembers?${params.toString()}`);
 
       console.log(`[API] Full response data:`, {
         status: response.status,
         statusText: response.statusText,
-        data: response.data,
-        dataKeys: Object.keys(response.data || {}),
-        dataValues: Object.values(response.data || {}),
-        headers: response.headers
+        data: response.data
       });
       
-      // Ensure the response has the correct structure
-      const data = response.data || {};
-      const members = Array.isArray(data.members) ? data.members : [];
-      const total = data.total || 0;
-
-      console.log(`[API] Processed response:`, {
-        membersCount: members.length,
-        total,
-        hasMembers: members.length > 0,
-        dataKeys: Object.keys(data),
-        firstMember: members[0],
-        rawData: data
-      });
-
       return {
-        groupMembers: members,
-        totalGroupMembers: total
+        currentPage: response.data.currentPage || 1,
+        totalPages: response.data.totalPages || 1,
+        totalGroupMembers: response.data.totalGroupMembers || 0,
+        groupMembers: response.data.groupMembers || []
       };
     } catch (error: any) {
       console.error(`[API] Error fetching members:`, {
@@ -137,13 +149,25 @@ export const divisionsApi = {
     }
   },
 
-  createDivision: async (payload: { divisionName: string; headName: string; email: string }) => {
+  createDivision: async (payload: { divisionName: string }) => {
     try {
-      await apiClient.post("/divisions/createDivision", payload);
-      return payload.divisionName;
-    } catch (error) {
-      console.error("Error creating division:", error);
-      throw error;
+      console.log("Creating division with payload:", payload);
+      const response = await apiClient.post("/divisions/createDivision", payload);
+      console.log("Create division response:", response.data);
+      
+      // Only return success if we actually get a success response
+      if (response.data.success === true) {
+        return payload.divisionName;
+      }
+      
+      // If we get here, something went wrong
+      throw new Error(response.data.message || 'Failed to create division');
+    } catch (error: any) {
+      console.error("Create division error:", error.response?.data || error);
+      if (error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw new Error(error.message || 'Failed to create division');
     }
   },
 

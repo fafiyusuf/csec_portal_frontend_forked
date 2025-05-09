@@ -4,9 +4,8 @@ import Button from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { toast } from "@/components/ui/use-toast"
 import { useDivisionsStore } from "@/stores/DivisionStore"
-import { UserRole } from "@/types/member"
 import { useState } from "react"
 
 interface AddMemberDialogProps {
@@ -20,26 +19,41 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
-  const [division, setDivision] = useState(divisionId)
-  const [group, setGroup] = useState(groupId)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
-  const { addMemberToDivision, divisions } = useDivisionsStore()
+  const { addMember, fetchGroupMembers } = useDivisionsStore()
 
   const handleSubmit = async () => {
-    if (!email || !division || !group || !firstName || !lastName) return
+    if (!email || !firstName || !lastName) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all required fields."
+      })
+      return
+    }
 
     setIsSubmitting(true)
     try {
-      await addMemberToDivision(division, {
-        email,
+      await addMember(divisionId, groupId, {
         firstName,
         lastName,
-        division,
-        group,
-        clubRole: 'Member' as UserRole,
-        membershipStatus: 'Active'
+        email,
+        generatedPassword: password
+      })
+      
+      // Refetch the group members to update the list
+      await fetchGroupMembers(divisionId, groupId, {
+        page: 1,
+        limit: 10
+      });
+
+      toast({
+        variant: "default",
+        className: "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800",
+        title: "Success!",
+        description: "Member added successfully."
       })
       setEmail("")
       setPassword("")
@@ -48,6 +62,11 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
       onOpenChange(false)
     } catch (error) {
       console.error("Failed to add member:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to add member"
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -91,37 +110,21 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
           </div>
 
           <div className="grid gap-2">
-            <Label>Select Division</Label>
-            <Select value={division} onValueChange={setDivision}>
-              <SelectTrigger onClick={() => {}}>
-                <SelectValue>Select Division</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {divisions.map((div) => (
-                  <SelectItem key={div.name} value={div.name}>
-                    {div.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Division</Label>
+            <Input
+              value={divisionId}
+              disabled
+              className="bg-muted"
+            />
           </div>
 
           <div className="grid gap-2">
-            <Label>Select Group</Label>
-            <Select value={group} onValueChange={setGroup}>
-              <SelectTrigger onClick={() => {}}>
-                <SelectValue>Select Group</SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {divisions
-                  .find((div) => div.name === division)
-                  ?.groups.map((g) => (
-                    <SelectItem key={g} value={g}>
-                      {g}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <Label>Group</Label>
+            <Input
+              value={groupId}
+              disabled
+              className="bg-muted"
+            />
           </div>
 
           <div className="grid gap-2">
@@ -152,16 +155,15 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
             />
           </div>
         </div>
-        <DialogFooter className="flex flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)} className="sm:order-1">
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={!email || !division || !group || !password || !firstName || !lastName || isSubmitting}
-            className="sm:order-2"
+            disabled={!email || !password || !firstName || !lastName || isSubmitting}
           >
-            Invite
+            Add Member
           </Button>
         </DialogFooter>
       </DialogContent>

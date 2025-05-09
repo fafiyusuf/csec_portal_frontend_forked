@@ -103,6 +103,15 @@ const updateLastSeen = async (user: User | null, token: string | null, set: any)
   }
 };
 
+const handleApiError = (error: any, pathname?: string) => {
+  if (error?.response?.status === 403) {
+    // Use window.location for hard redirect to unauthorized page
+    window.location.href = `/unauthorized?message=You do not have permission to access this resource`;
+    return null;
+  }
+  throw error;
+};
+
 const useUserStore = create<UserStore>()(
   persist(
     (set, get) => ({
@@ -230,12 +239,20 @@ const useUserStore = create<UserStore>()(
             throw new Error('Invalid user data: missing club role');
           }
 
-          // Store tokens and user data
+          // Store tokens in both cookies and storage
           const storage = rememberMe ? localStorage : sessionStorage;
           storage.setItem('token', token);
           storage.setItem('refreshToken', refreshToken);
           storage.setItem('userRole', userData.member.clubRole);
           storage.setItem('user', JSON.stringify(userData));
+
+          // Set cookies with appropriate expiration
+          const cookieOptions = rememberMe ? 
+            { expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } : // 30 days
+            { expires: new Date(Date.now() + 24 * 60 * 60 * 1000) }; // 1 day
+          
+          document.cookie = `token=${token}; path=/; ${cookieOptions.expires.toUTCString()}`;
+          document.cookie = `refreshToken=${refreshToken}; path=/; ${cookieOptions.expires.toUTCString()}`;
 
           set({
             token,
@@ -248,8 +265,7 @@ const useUserStore = create<UserStore>()(
           return true;
         } catch (error) {
           console.error('Login error:', error);
-          const errorMessage = error instanceof Error ? error.message : 'Login failed. Please check your credentials.';
-          set({ error: errorMessage });
+          set({ error: error instanceof Error ? error.message : 'Login failed' });
           return false;
         }
       },
@@ -336,30 +352,32 @@ const useUserStore = create<UserStore>()(
 
       fetchUserById: async (id) => {
         try {
-          // Get fresh token from store
           const { token } = get();
           if (!token) throw new Error('Not authenticated');
-      
+
           const response = await fetch(`${BASE_URL}/members/${id}`, {
             headers: { 'Authorization': `Bearer ${token}` },
           });
-      
+
+          if (response.status === 403) {
+            window.location.href = `/unauthorized?message=You do not have permission to access this resource`;
+            return null;
+          }
+
           if (response.status === 401) {
-            // Attempt refresh and retry
             await get().refreshSession();
             return get().fetchUserById(id);
           }
-      
+
           if (!response.ok) {
             throw new Error(`User fetch failed: ${response.status}`);
           }
-      
+
           const user = await response.json();
           set({ user });
           return user;
         } catch (error) {
-          console.error('Fetch user error:', error);
-          throw error;
+          return handleApiError(error);
         }
       },
 
@@ -377,6 +395,11 @@ const useUserStore = create<UserStore>()(
             body: JSON.stringify(updates),
           });
 
+          if (response.status === 403) {
+            window.location.href = `/unauthorized?message=You do not have permission to update this profile`;
+            return null;
+          }
+
           if (!response.ok) {
             const errorData = await response.json().catch(() => null);
             throw new Error(errorData?.message || `Failed to update profile: ${response.status} ${response.statusText}`);
@@ -387,17 +410,14 @@ const useUserStore = create<UserStore>()(
             throw new Error('Invalid response format from server');
           }
 
-          // Update the user state
           set({ user: updatedUser });
           
-          // Update the stored user data in localStorage/sessionStorage
           const storage = localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
           storage.setItem('user', JSON.stringify(updatedUser));
 
           return updatedUser;
         } catch (error) {
-          console.error('Profile update failed:', error);
-          throw error;
+          return handleApiError(error);
         }
       },
 

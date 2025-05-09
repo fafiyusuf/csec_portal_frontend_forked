@@ -4,6 +4,7 @@ import Button from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import Input from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { toast } from "@/components/ui/use-toast"
 import { useDivisionsStore } from "@/stores/DivisionStore"
 import { useState } from "react"
 
@@ -13,28 +14,46 @@ interface AddDivisionDialogProps {
 }
 
 export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps) {
-  const [name, setName] = useState("")
+  const [divisionName, setDivisionName] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { addDivision } = useDivisionsStore()
 
   const handleSubmit = async () => {
-    if (!name) return
+    if (!divisionName) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please enter a division name."
+      })
+      return
+    }
 
     setIsSubmitting(true)
     try {
-      await addDivision({
-        name,
-        description: "",
-        members: [],
-        slug: name.toLowerCase().replace(/\s+/g, "-"),
-        groups: [],
-        memberCount: 0,
-        groupMemberCounts: {}
-      })
-      setName("")
-      onOpenChange(false)
+      const success = await addDivision({ divisionName });
+      if (success) {
+        toast({
+          variant: "default",
+          className: "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800",
+          title: "Success!",
+          description: "Division created successfully."
+        })
+        setDivisionName("")
+        onOpenChange(false)
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to create division. Please try again."
+        })
+      }
     } catch (error) {
       console.error("Failed to add division:", error)
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create division"
+      })
     } finally {
       setIsSubmitting(false)
     }
@@ -51,8 +70,8 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
             <Label htmlFor="division-name">Division Name</Label>
             <Input
               id="division-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              value={divisionName}
+              onChange={(e) => setDivisionName(e.target.value)}
               placeholder="Division Name"
             />
           </div>
@@ -61,7 +80,7 @@ export function AddDivisionDialog({ open, onOpenChange }: AddDivisionDialogProps
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!name || isSubmitting}>
+          <Button onClick={handleSubmit} disabled={!divisionName || isSubmitting}>
             Add Division
           </Button>
         </DialogFooter>

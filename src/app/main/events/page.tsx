@@ -243,32 +243,24 @@ const SessionsPage = () => {
             items.map((item) =>
               'sessionTitle' in item ? (
                 <SessionItem
-                  {...{
-                    key: item._id,
-                    item: item as any,
-                    onEdit: handleEdit as any,
-                    onDelete: handleDelete as any,
-                    date: item.date as any,
-                    className: "dark:bg-gray-800 dark:hover:bg-gray-700",
-                    allowAttendance: item.status === 'ongoing'
-                  } as any}
+                  key={item._id}
+                  item={item as any}
+                  onEdit={handleEdit as any}
+                  onDelete={handleDelete as any}
+                  allowAttendance={item.status === 'ongoing'}
                 />
               ) : (
                 <EventItem
-                  {...{
-                    key: item._id,
-                    item: item as any,
-                    onEdit: handleEdit as any,
-                    onDelete: handleDelete as any,
-                    className: "dark:bg-gray-800 dark:hover:bg-gray-700"
-                  } as any}
+                  key={item._id}
+                  item={item as any}
+                  onEdit={handleEdit as any}
+                  onDelete={handleDelete as any}
                 />
               )
             )
           ) : (
-            <div className="bg-card text-card-foreground rounded-lg shadow p-6 text-center text-muted-foreground
-                          dark:bg-gray-800 dark:text-gray-300">
-              No {contentType} found.
+            <div className="text-center text-muted-foreground dark:text-gray-400 py-8">
+              No {contentType} found
             </div>
           )}
         </div>

@@ -21,20 +21,11 @@ export default function DivisionsPage() {
 
   const { divisions, loading, fetchDivisions, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
 
-  const [divisionStats, setDivisionStats] = useState<{
-    [divisionName: string]: {
-      memberCount: number
-      groupMemberCounts: { [group: string]: number }
-      groups: string[]
-    }
-  }>({})
-
   useEffect(() => {
     const loadDivisions = async () => {
       try {
         await fetchDivisions()
         setError(null)
-        console.log("Divisions loaded successfully:", divisions)
       } catch (err) {
         setError("Failed to load divisions. Please try again later.")
         console.error(err)
@@ -43,42 +34,6 @@ export default function DivisionsPage() {
 
     loadDivisions()
   }, [fetchDivisions])
-
-  useEffect(() => {
-    const fetchStats = async () => {
-      const token = useUserStore.getState().token
-      const stats: typeof divisionStats = {}
-      for (const division of divisions) {
-        const groupsRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/divisions/getGroups/${encodeURIComponent(division.name)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        })
-        const groupsData = await groupsRes.json()
-        const groups: string[] = groupsData.groups || []
-        let memberCount = 0
-        const groupMemberCounts: { [group: string]: number } = {}
-        for (const group of groups) {
-          const membersRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/groups/getMembers?division=${encodeURIComponent(division.name)}&group=${encodeURIComponent(group)}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
-          const membersData = await membersRes.json()
-          const count = (membersData.groupMembers || []).length
-          groupMemberCounts[group] = count
-          memberCount += count
-        }
-        stats[division.name] = { memberCount, groupMemberCounts, groups }
-      }
-      setDivisionStats(stats)
-    }
-    if (divisions.length > 0) {
-      fetchStats()
-    }
-  }, [divisions])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
@@ -89,28 +44,22 @@ export default function DivisionsPage() {
     }
   }
 
+  const filteredDivisions = divisions.filter(division =>
+    division.name.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   return (
     <div className="flex flex-col h-full">
-       <div className="border-b">
-        <div className="flex h-16 items-center px-4 justify-between">
-          <div className="flex items-center">
-            <nav className="flex items-center space-x-2">
-              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
-                <Home className="h-4 w-4" />
-                <span className="sr-only">Home</span>
-              </Link>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-              <Link href="/main/divisions" className="text-muted-foreground hover:text-foreground">
-                All Divisions
-              </Link>
-              <ChevronRight className="h-4 w-4 text-muted-foreground" />
-            </nav>
-          </div>
-        </div>
-      </div>
       <div className="border-b">
         <div className="flex h-16 items-center px-4 justify-between">
-          <h1 className="text-xl font-semibold">All Divisions</h1>
+          <nav className="flex items-center space-x-2">
+            <Link href="/main/divisions" className="text-foreground font-medium">
+              <Home className="h-4 w-4" />
+              <span className="sr-only">Home</span>
+            </Link>
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            <span className="text-muted-foreground">All Divisions</span>
+          </nav>
         </div>
       </div>
 
@@ -149,7 +98,7 @@ export default function DivisionsPage() {
               <div key={i} className="h-64 rounded-lg border animate-pulse bg-muted" />
             ))}
           </div>
-        ) : divisions.length === 0 ? (
+        ) : filteredDivisions.length === 0 ? (
           <div className="text-center py-12">
             <h3 className="text-lg font-medium">No divisions found</h3>
             <p className="text-muted-foreground mt-2">
@@ -161,15 +110,10 @@ export default function DivisionsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {divisions.map((division) => (
+            {filteredDivisions.map((division) => (
               <DivisionCard
                 key={division.name}
-                division={{
-                  ...division,
-                  memberCount: divisionStats[division.name]?.memberCount || 0,
-                  groupMemberCounts: divisionStats[division.name]?.groupMemberCounts || {},
-                  groups: divisionStats[division.name]?.groups || [],
-                }}
+                division={division}
               />
             ))}
           </div>

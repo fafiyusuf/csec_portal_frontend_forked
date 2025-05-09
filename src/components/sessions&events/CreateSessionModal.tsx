@@ -123,8 +123,14 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
     if (isOpen) {
       setDivisionsLoading(true);
       divisionsApi.getAllDivisions()
-        .then((divisions) => setDivisionOptions(divisions))
-        .catch(() => setDivisionOptions([]))
+        .then((divisions) => {
+          console.log('Fetched divisions:', divisions);
+          setDivisionOptions(Array.isArray(divisions) ? divisions : []);
+        })
+        .catch((error) => {
+          console.error('Error fetching divisions:', error);
+          setDivisionOptions([]);
+        })
         .finally(() => setDivisionsLoading(false));
     }
   }, [isOpen]);
@@ -184,8 +190,10 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
               disabled={divisionsLoading}
             >
               <option value="">Select Division</option>
-              {divisionOptions.map((div) => (
-                <option key={div} value={div} className="dark:bg-gray-700">{div}</option>
+              {divisionOptions.map((division) => (
+                <option key={division} value={division} className="dark:bg-gray-700">
+                  {division}
+                </option>
               ))}
             </select>
           </div>
