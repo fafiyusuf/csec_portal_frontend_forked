@@ -89,19 +89,21 @@ const SessionsPage = () => {
     ...s,
     id: s._id || (s as any).id,
     _id: s._id || (s as any).id,
-    date: s.startDate ? formatDisplayDate(s.startDate) : 'Date not specified',
+    startDate: s.startDate,
     venue: (s as any).venue || 'N/A',
     visibility: (s as any).visibility || 'public',
-    status: calculateStatus(s.startDate as string, s.endDate as string),
+    status: s.status || 'planned',
   })) as any[];
   const mappedEvents = events.map((e) => ({
     ...e,
     id: e._id || (e as any).id,
     _id: e._id || (e as any).id,
-    date: e.eventDate ? formatDisplayDate(e.eventDate) : 'Date not specified',
+    eventDate: e.eventDate,
+    startDate: e.startDate,
+    date: e.date,
     venue: (e as any).venue || 'N/A',
     visibility: (e as any).visibility || 'public',
-    status: calculateStatus(e.eventDate as string, e.eventDate as string),
+    status: e.status || 'planned',
   })) as any[];
 
   const items: any[] = contentType === 'sessions' ? mappedSessions : mappedEvents;
@@ -244,7 +246,11 @@ const SessionsPage = () => {
               'sessionTitle' in item ? (
                 <SessionItem
                   key={item._id}
-                  item={item as any}
+                  item={{
+                      ...item,
+                      id: item._id, // Map _id to id if needed
+                      status: item.status // Map startDate to date if needed
+                    }}
                   onEdit={handleEdit as any}
                   onDelete={handleDelete as any}
                   allowAttendance={item.status === 'ongoing'}

@@ -28,7 +28,7 @@ interface UserStore {
   updateLastSeen: () => Promise<void>;
 
   fetchUserById: (id: string) => Promise<User>;
-  updateUserProfile: (updates: Partial<User>) => Promise<void>;
+  updateUserProfile: (updates: Partial<User> | FormData) => Promise<void>;
 
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;
@@ -392,14 +392,19 @@ const useUserStore = create<UserStore>()(
         if (!user || !token) throw new Error('Not authenticated');
 
         try {
-          const response = await fetch(`${BASE_URL}/members/${user.member._id}`, {
-            method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(updates),
-          });
+          console.log('updates', updates);
+          let fetchOptions: RequestInit = {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+          };
+          if (updates instanceof FormData) {
+            fetchOptions.body = updates;
+            // Do not set Content-Type, browser will set it for FormData
+          } else {
+            fetchOptions.body = JSON.stringify(updates);
+            (fetchOptions.headers as Record<string, string>)['Content-Type'] = 'application/json';
+          }
+          const response = await fetch(`${BASE_URL}/members/profileDetails`, fetchOptions);
 
           if (response.status === 403) {
             window.location.href = `/unauthorized?message=You do not have permission to update this profile`;
@@ -411,17 +416,19 @@ const useUserStore = create<UserStore>()(
             throw new Error(errorData?.message || `Failed to update profile: ${response.status} ${response.statusText}`);
           }
 
-          const updatedUser = await response.json();
-          if (!updatedUser || !updatedUser.member) {
-            throw new Error('Invalid response format from server');
+          const updatedUser = await response.json().catch(() => null);
+          if (updatedUser && updatedUser.member) {
+            set({ user: updatedUser });
+            const storage = localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
+            storage.setItem('user', JSON.stringify(updatedUser));
+            return updatedUser;
+          } else if (updatedUser && updatedUser.message) {
+            // If only a message is returned, treat as success
+            return updatedUser;
+          } else {
+            // If nothing useful is returned, just return
+            return;
           }
-
-          set({ user: updatedUser });
-          
-          const storage = localStorage.getItem('rememberMe') === 'true' ? localStorage : sessionStorage;
-          storage.setItem('user', JSON.stringify(updatedUser));
-
-          return updatedUser;
         } catch (error) {
           return handleApiError(error);
         }

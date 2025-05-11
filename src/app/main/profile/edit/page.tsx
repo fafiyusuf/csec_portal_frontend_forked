@@ -63,12 +63,11 @@ const validationSchema = Yup.object({
   department: Yup.string().required('Department is required'),
   mentor: Yup.string().required('Mentor is required'),
   universityId: Yup.string(),
-  instagram: Yup.string(),
-  linkedin: Yup.string(),
-  codeforces: Yup.string(),
+  instagramHandle: Yup.string(),
+  linkedinHandle: Yup.string(),
+  codeforcesHandle: Yup.string(),
   cv: Yup.string(),
   leetcode: Yup.string(),
-  joiningDate: Yup.string(),
   bio: Yup.string().max(500, 'Bio must be 500 characters or less'),
 });
 
@@ -123,7 +122,7 @@ const ProfilePicUpload = () => {
     if (typeof values.profilePicture === 'string' && values.profilePicture) {
       const imgUrl = values.profilePicture.startsWith('http') 
         ? values.profilePicture 
-        : `${process.env.NEXT_PUBLIC_API_BASE_URL}${values.profilePicture}`;
+        : `${process.env.NEXT_PUBLIC_API_BASE}${values.profilePicture}`;
       setPreview(imgUrl);
     }
   }, [values.profilePicture]);
@@ -221,6 +220,7 @@ export default function ProfileEditPage() {
     lastName: formData.lastName || user?.member?.lastName || '',
     phoneNumber: formData.phoneNumber || user?.member?.phoneNumber || '',
     email: formData.email || user?.member?.email || '',
+    profilePicture: formData.profilePicture || user?.member?.profilePicture || '',
     birthDate: formData.birthDate || user?.member?.birthDate || '',
     github: formData.github || user?.member?.github || '',
     gender: (formData.gender || user?.member?.gender || 'prefer-not-to-say') as 'male' | 'female' | 'prefer-not-to-say' | '',
@@ -230,14 +230,12 @@ export default function ProfileEditPage() {
     department: formData.department || user?.member?.department || '',
     mentor: formData.mentor || user?.member?.mentor || '',
     universityId: formData.universityId || user?.member?.universityId || '',
+    instagramHandle: formData.instagramHandle || user?.member?.instagramHandle || '',
+    linkedinHandle: formData.linkedinHandle || user?.member?.linkedinHandle || '',
+    codeforcesHandle: formData.codeforcesHandle || user?.member?.codeforcesHandle || '',
     cv: formData.cv || user?.member?.cv || '',
-    bio: formData.bio || user?.member?.bio || '',
-    instagram: formData.instagram || user?.member?.instagramHandle || '',
-    linkedin: formData.linkedin || user?.member?.linkedinHandle || '',
-    codeforces: formData.codeforces || user?.member?.codeforcesHandle || '',
     leetcode: formData.leetcode || user?.member?.leetcodeHandle || '',
-    profilePicture: formData.profilePicture || user?.member?.profilePicture || '',
-    joiningDate: formData.joiningDate || user?.member?.createdAt || '',
+    bio: formData.bio || user?.member?.bio || '',
   };
 
   useEffect(() => {
@@ -253,43 +251,40 @@ export default function ProfileEditPage() {
   const handleSubmit = async (values: any, { setSubmitting }: FormikHelpers<any>) => {
     try {
       setSubmitting(true);
-      
-      // Validate all fields first
       await validationSchema.validate(values, { abortEarly: false });
-      
-      // Create FormData for the request
       const formData = new FormData();
-      
-      // Format dates before sending
-      const formattedValues = {
-        ...values,
-        birthDate: values.birthDate ? new Date(values.birthDate).toISOString().split('T')[0] : '',
-        joiningDate: values.joiningDate ? new Date(values.joiningDate).toISOString().split('T')[0] : ''
-      };
-      
-      // Only append non-empty values
-      Object.keys(formattedValues).forEach(key => {
-        if (key !== 'profilePicture' && formattedValues[key] !== undefined && formattedValues[key] !== null && formattedValues[key] !== '') {
-          formData.append(key, formattedValues[key]);
+      const fieldNames = [
+        'firstName', 'lastName', 'phoneNumber', 'email', 'profilePicture', 'birthDate', 'github', 'gender', 'telegramHandle',
+        'graduationYear', 'specialization', 'department', 'mentor', 'universityId', 'instagramHandle', 'linkedinHandle',
+        'codeforcesHandle', 'cv', 'bio'
+      ];
+      fieldNames.forEach(key => {
+        let value = values[key];
+        if (key === 'graduationYear' && value !== undefined && value !== null && value !== '') {
+          value = String(value);
+        }
+        if (key === 'profilePicture') {
+          if (value instanceof File) {
+            formData.append('profilePicture', value);
+          }
+        } else if (value !== undefined && value !== null && value !== '') {
+          formData.append(key, value);
         }
       });
-
-      // Handle profile picture upload
-      if (values.profilePicture instanceof File) {
-        formData.append('profilePicture', values.profilePicture);
-      } else if (typeof values.profilePicture === 'string' && values.profilePicture) {
-        formData.append('profilePicture', values.profilePicture);
+      // Only append leetcodeHandle if not empty
+      if (values.leetcode && values.leetcode !== '') {
+        formData.append('leetcodeHandle', values.leetcode);
       }
-
-      // Get the token from the correct storage
+      // Debug: log all FormData keys/values
+      for (let pair of formData.entries()) {
+        console.log(pair[0]+ ': ' + pair[1]);
+      }
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         throw new Error('No authentication token found');
       }
-
-      // First, update the profile details
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/members/profileDetails`,
+        `${process.env.NEXT_PUBLIC_API_BASE}/members/profileDetails`,
         formData,
         {
           headers: {
@@ -298,64 +293,30 @@ export default function ProfileEditPage() {
           },
         }
       );
-
       if (!response.data) {
         throw new Error('No data received from server');
       }
-
-      // Prepare the updated user data
-      const updatedUser = {
-        ...user,
-        member: {
-          ...user?.member,
-          ...response.data.member,
-          profilePicture: response.data.member?.profilePicture || values.profilePicture,
-          firstName: response.data.member?.firstName || values.firstName,
-          lastName: response.data.member?.lastName || values.lastName,
-          email: response.data.member?.email || values.email,
-          phoneNumber: response.data.member?.phoneNumber || values.phoneNumber,
-          birthDate: response.data.member?.birthDate || formattedValues.birthDate,
-          github: response.data.member?.github || values.github,
-          gender: response.data.member?.gender || values.gender,
-          telegramHandle: response.data.member?.telegramHandle || values.telegramHandle,
-          graduationYear: response.data.member?.graduationYear || values.graduationYear,
-          specialization: response.data.member?.specialization || values.specialization,
-          department: response.data.member?.department || values.department,
-          mentor: response.data.member?.mentor || values.mentor,
-          universityId: response.data.member?.universityId || values.universityId,
-          cv: response.data.member?.cv || values.cv,
-          bio: response.data.member?.bio || values.bio,
-          instagramHandle: response.data.member?.instagramHandle || values.instagram,
-          linkedinHandle: response.data.member?.linkedinHandle || values.linkedin,
-          codeforcesHandle: response.data.member?.codeforcesHandle || values.codeforces,
-          leetcodeHandle: response.data.member?.leetcodeHandle || values.leetcode,
-          createdAt: response.data.member?.createdAt || formattedValues.joiningDate,
-        }
-      };
-
-      // Update user store
-      await useUserStore.getState().updateUserProfile(updatedUser);
-      
+      // Update user store with the new member data
+      const result = await useUserStore.getState().updateUserProfile(formData);
+      // If only a message is returned, refetch user data to update the UI
+      if (result && result.message && user?.member?._id) {
+        await useUserStore.getState().fetchUserById(user.member._id);
+      }
       // Update form store with the latest data
       updateFormData({
-        ...formattedValues,
+        ...values,
         profilePicture: response.data.member?.profilePicture || values.profilePicture,
       });
-      
-      // Show success message
       toast({ 
         title: 'Profile updated successfully!', 
         description: 'Your changes have been saved.',
         variant: 'default'
       });
-      
-      // Reset form state
       resetForm();
-      
-      // Redirect to profile page
       router.push('/main/profile');
     } catch (error: unknown) {
       console.error('Submission failed:', error);
+      console.log('formatted dsts', formData)
       
       // Handle validation errors
       if (error instanceof Yup.ValidationError) {
@@ -590,28 +551,28 @@ export default function ProfileEditPage() {
                 />
                 <Input
                   label="Instagram Handle"
-                  name="instagram"
+                  name="instagramHandle"
                   onChange={handleChange}
-                  value={values.instagram || ''}
-                  error={touched.instagram && errors.instagram}
+                  value={values.instagramHandle || ''}
+                  error={touched.instagramHandle && errors.instagramHandle}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="@username"
                 />
                 <Input
                   label="LinkedIn Account"
-                  name="linkedin"
+                  name="linkedinHandle"
                   onChange={handleChange}
-                  value={values.linkedin || ''}
-                  error={touched.linkedin && errors.linkedin}
+                  value={values.linkedinHandle || ''}
+                  error={touched.linkedinHandle && errors.linkedinHandle}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   placeholder="https://linkedin.com/in/username"
                 />
                 <Input
                   label="Codeforces Handle"
-                  name="codeforces"
+                  name="codeforcesHandle"
                   onChange={handleChange}
-                  value={values.codeforces || ''}
-                  error={touched.codeforces && errors.codeforces}
+                  value={values.codeforcesHandle || ''}
+                  error={touched.codeforcesHandle && errors.codeforcesHandle}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <Input
@@ -629,15 +590,6 @@ export default function ProfileEditPage() {
                   onChange={handleChange}
                   value={values.leetcode || ''}
                   error={touched.leetcode && errors.leetcode}
-                  className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                />
-                <Input
-                  label="Joining Date"
-                  type="date"
-                  name="joiningDate"
-                  onChange={handleChange}
-                  value={values.joiningDate}
-                  error={touched.joiningDate && errors.joiningDate}
                   className="dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
                 <div className="col-span-2 w-200">

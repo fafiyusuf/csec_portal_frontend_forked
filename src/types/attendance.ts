@@ -7,7 +7,7 @@ export interface Session {
   startDate: string;
   endDate: string;
   sessions: SessionTime[];
-  status: "Planned" | "Ended";
+  status: string;
 }
 
 export interface SessionTime {

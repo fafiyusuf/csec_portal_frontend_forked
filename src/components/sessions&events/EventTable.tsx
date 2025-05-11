@@ -1,4 +1,4 @@
-import { calculateStatus } from '@/utils/date';
+import { format, parse } from 'date-fns';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type EventTableProps = {
@@ -6,8 +6,10 @@ type EventTableProps = {
     status: 'planned' | 'ongoing' | 'ended';
     category: string;
     eventTitle: string;
-    startDate: string;
-    endDate : string;
+    startDate?: string;
+    endDate?: string;
+    eventDate?: string;
+    date?: string;
     visibility: 'public' | 'members';
     timeRemaining: string;
     venue: string;
@@ -20,6 +22,21 @@ type EventTableProps = {
   }[];
   onEdit: (item: EventTableProps['items'][number]) => void;
   onDelete: (id: string) => void;
+};
+
+// Helper to parse both 'YYYY-MM-DD' and 'YY/MM/DD'
+const parseFlexibleDate = (dateString: string | undefined) => {
+  if (!dateString) return null;
+  let parsed: Date | null = null;
+  try {
+    parsed = parse(dateString, 'yyyy-MM-dd', new Date());
+    if (isNaN(parsed.getTime())) {
+      parsed = parse(dateString, 'yy/MM/dd', new Date());
+    }
+  } catch {
+    parsed = null;
+  }
+  return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 };
 
 const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
@@ -45,10 +62,16 @@ const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {items.map((item) => {
-              const status = calculateStatus(item.startDate, item.endDate);
+              // Try all possible date fields
+              const dateToFormat = item.eventDate || item.startDate || item.date;
+              const parsedDate = parseFlexibleDate(dateToFormat);
+              const formattedDate = parsedDate ? format(parsedDate, 'MMM d, yyyy') : 'Date not specified';
+
               return (
                 <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                  <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-200">{item.startDate}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-200">
+                    {formattedDate}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium dark:text-gray-100">{item.eventTitle}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-300">{item.division}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm">
@@ -62,9 +85,9 @@ const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      statusColors[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                      statusColors[item.status] || 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                     }`}>
-                      {status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Unknown'}
+                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap flex gap-2">

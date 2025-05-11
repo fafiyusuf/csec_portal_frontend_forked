@@ -142,7 +142,7 @@ const StatsPage = () => {
   });
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full max-w-7xl mx-auto p-4 dark:bg-gray-800 dark:text-white">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4 w-full max-w-3xl mx-auto p-4 dark:bg-gray-800 dark:text-white">
       <StatsCard 
         title="Total Members"
         value={totalMembers ?? 'Loading...'}

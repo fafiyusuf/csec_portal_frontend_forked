@@ -83,9 +83,14 @@ export default function MembersAttendancePage() {
   const currentMembers = filteredMembers.slice(startIndex, endIndex)
 
   // Helper: check if attendance can be taken
-  const isToday = currentSession && currentSession.startDate && currentSession.startDate.slice(0, 10) === new Date().toISOString().slice(0, 10);
+  const isStarted = currentSession && currentSession.status=='on-going' ;
   const isAttendanceTaken = useAttendanceStore.getState().attendanceTakenSessions.includes(currentSession?._id || "");
-  const canTakeAttendance = isToday && currentSession?.status !== "Ended" && !isAttendanceTaken;
+  const canTakeAttendance = isStarted && !isAttendanceTaken;
+  useEffect(()=>{
+    console.log(canTakeAttendance)
+    console.log(isStarted,'is started')
+    console.log(isAttendanceTaken)
+  },[canTakeAttendance])
 
   const handleAttendanceChange = (memberId: string, status: "Present" | "Absent") => {
     updateMemberAttendance(memberId, status)
@@ -112,6 +117,7 @@ export default function MembersAttendancePage() {
   const handleSave = async () => {
     if (!currentSession?._id) return;
     if (!canTakeAttendance) {
+      console.log('saved', currentSession)
       toast({
         title: "Attendance Not Allowed",
         description: isAttendanceTaken
@@ -119,6 +125,7 @@ export default function MembersAttendancePage() {
           : "Attendance can only be taken for today's session and not for ended/planned sessions.",
         variant: "destructive",
       });
+
       return;
     }
     setIsSaving(true);

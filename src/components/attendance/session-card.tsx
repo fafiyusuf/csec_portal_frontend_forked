@@ -5,6 +5,7 @@ import Button from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { Session } from "@/types/attendance"
 import { format, parse } from "date-fns"
+import { useEffect } from "react"
 
 interface SessionCardProps {
   session: Session
@@ -12,49 +13,45 @@ interface SessionCardProps {
 }
 
 export default function SessionCard({ session, onClick }: SessionCardProps) {
-  // Parse dates from the format "yy/MM/dd" (e.g., "24/02/10")
-  const parseCustomDate = (dateString: string | undefined): Date | null => {
-    if (!dateString) return null
+  // Helper function to format dates
+  useEffect(() => {
+  console.log("Fetched sessions:", session);
+}, [session]);
+  const formatDate = (dateString: string) => {
     try {
-      return parse(dateString, 'yy/MM/dd', new Date())
-    } catch {
-      return null // Return null if parsing fails
+      const date = parse(dateString, "yy/MM/dd", new Date())
+      return format(date, "MMM d, yyyy")
+    } catch (e) {
+      return dateString // fallback if parsing fails
     }
   }
 
-  // Format session times if available
-  const sessionTime = session.sessions?.[0]
-    ? `${session.sessions[0].day} ${session.sessions[0].startTime} - ${session.sessions[0].endTime}`
-    : "Schedule not set"
-
-  // Safely parse dates
-  const startDate = parseCustomDate(session.startDate)
-  const endDate = parseCustomDate(session.endDate)
-
-  // Format date safely
-  const formatDate = (date: Date | null): string => {
-    if (!date || isNaN(date.getTime())) return 'Not set'
-    return format(date, 'MMM d, yyyy')
-  }
+  // Get the first session time if available
+  const firstSessionTime = session.sessions?.[0]
+  const sessionTime = firstSessionTime 
+    ? `${firstSessionTime.day} ${firstSessionTime.startTime} - ${firstSessionTime.endTime}`
+    : "Time not specified"
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow  dark:bg-gray-800  dark:text-white">
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gray-800 dark:text-white">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-2 mb-2">
             <Badge
               className={cn(
-                "px-3 py-1 text-xs font-medium dark:bg-gray-800  dark:text-white",
-                session.status.toLowerCase() === "ended" ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800",
+                "px-3 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white",
+                session.status.toLowerCase() === "ended" 
+                  ? "bg-red-100 text-red-800" 
+                  : "bg-green-100 text-green-800",
               )}
             >
               {session.status}
             </Badge>
-            <h3 className="font-semibold dark:bg-gray-800  dark:text-white">{session.division}</h3>
+            <h3 className="font-semibold dark:bg-gray-800 dark:text-white">{session.division}</h3>
           </div>
-          <h4 className="text-lg font-semibold mb-1 dark:bg-gray-800  dark:text-white">{session.sessionTitle}</h4>
-          <p className="text-sm text-muted-foreground dark:bg-gray-800  dark:text-white">
-            {formatDate(startDate)} - {formatDate(endDate)}
+          <h4 className="text-lg font-semibold mb-1 dark:bg-gray-800 dark:text-white">{session.sessionTitle}</h4>
+          <p className="text-sm text-muted-foreground dark:bg-gray-800 dark:text-white">
+            {formatDate(session.startDate)} - {formatDate(session.endDate)}
           </p>
           <p className="text-xs text-muted-foreground mt-1">{sessionTime}</p>
         </div>

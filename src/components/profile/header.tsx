@@ -21,10 +21,12 @@ const getRobohashUrl = (id: string) => {
 // Clean Cloudinary URL to prevent concatenation issues
 const cleanCloudinaryUrl = (url: string | undefined) => {
   if (!url) return null;
+  
   // If the URL already contains the full Cloudinary URL, return it as is
   if (url.startsWith('https://res.cloudinary.com')) {
     return url;
   }
+  
   // If it's just the path, return null to use robohash
   return null;
 };
@@ -92,7 +94,22 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       .slice(0, 2);
   };
 
-  const cleanedProfilePicture = cleanCloudinaryUrl(profilePicture);
+  // Ensure we have a valid URL for the profile picture
+  const getProfilePictureUrl = () => {
+    if (!profilePicture) return getRobohashUrl(id);
+    if (typeof profilePicture === 'string') {
+      if (profilePicture.startsWith('https://res.cloudinary.com')) {
+        return profilePicture;
+      }
+      if (profilePicture.startsWith('blob:')) {
+        return profilePicture;
+      }
+      if (profilePicture.startsWith('http')) {
+        return profilePicture;
+      }
+    }
+    return getRobohashUrl(id);
+  };
 
   return (
     <div className="relative bg-blue-950 dark:bg-gray-900 rounded-lg shadow-sm mb-4 overflow-hidden">
@@ -104,6 +121,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           fill
           className="object-cover"
           onError={() => setBgImageSrc(getRobohashUrl(id))}
+          unoptimized
         />
       </div>
   
@@ -121,7 +139,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         <div className="relative">
           <Avatar className="border-4 border-white shadow-lg w-24 h-24 sm:w-28 sm:h-28">
             <AvatarImage 
-              src={cleanedProfilePicture || getRobohashUrl(id)}
+              src={getProfilePictureUrl()}
               alt={fullName}
               className="rounded-full object-cover"
               onError={(e) => {

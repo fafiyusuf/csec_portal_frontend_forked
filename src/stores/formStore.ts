@@ -16,14 +16,13 @@ export interface FormData {
   department: string;
   mentor: string;
   universityId: string;
-  instagram: string | null;
-  linkedin: string | null;
-  codeforces: string | null;
+  instagramHandle: string | null;
+  linkedinHandle: string | null;
+  codeforcesHandle: string | null;
   cv: string | null;
   leetcode: string | null;
-  joiningDate: string | null;
+  // joiningDate: string | null;
   bio: string | null;
-  resources: Array<string>;
 }
 
 interface FormState {
@@ -52,11 +51,10 @@ const initialState: FormData = {
   universityId: '',
   gender: '',
   leetcode: null,
-  linkedin: null,
-  codeforces: null,
-  instagram: null,
-  joiningDate: null,
-  resources: [],
+  linkedinHandle: null,
+  codeforcesHandle: null,
+  instagramHandle: null,
+  // joiningDate: null,
   profilePicture: null,
 };
 

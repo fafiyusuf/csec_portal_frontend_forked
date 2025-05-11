@@ -5,6 +5,7 @@ export type Session = {
   startDate: string;
   endDate: string;
   groups: string[];
+  status : string
   sessions: {
     day: string;
     startTime: string;
@@ -23,4 +24,5 @@ export type Event = {
   visibility: string;
   data: Event[]; 
   totalCount: number
+  status : string
 };

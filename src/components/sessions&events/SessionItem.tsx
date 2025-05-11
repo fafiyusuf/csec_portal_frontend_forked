@@ -1,12 +1,12 @@
 import Button from '@/components/ui/button';
-import { calculateStatus, getTimeLeft, Status } from '@/utils/date';
 import { format, parse } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 
 type SessionItemProps = {
   item: {
-    status?: Status; // Make it optional since we'll calculate it
+    status: 'planned' | 'ongoing' | 'ended';
     division: string;
     sessionTitle: string;
     startDate: string;
@@ -17,6 +17,11 @@ type SessionItemProps = {
     id: string;
     _id?: string;
     date: string;
+    sessions?: {
+      day: string;
+      startTime: string;
+      endTime: string;
+    }[];
   };
   onEdit: (item: SessionItemProps['item']) => void;
   onDelete: (id: string) => void;
@@ -41,18 +46,16 @@ const parseFlexibleDate = (dateString: string | undefined) => {
 const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemProps) => {
   const router = useRouter();
   
-  // Calculate status and time using parsed dates
-  const start = parseFlexibleDate(item.startDate);
-  const end = parseFlexibleDate(item.endDate);
-  const status = calculateStatus(start, end) as keyof typeof statusColors;
-  const timeRemaining = getTimeLeft(start, end);
-  
   const handleAttendanceClick = () => {
     const sessionId = item._id || item.id;
     if (sessionId) {
       router.push(`/main/attendance/${sessionId}`);
     }
   };
+
+  useEffect(() => {
+    console.log("Fetched sessions:", item);
+  }, [item]);
 
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
@@ -66,7 +69,18 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
   };
 
   // Only show attendance button for ongoing sessions
-  const showAttendanceButton = status === 'ongoing' && (typeof allowAttendance === 'undefined' || allowAttendance);
+  const showAttendanceButton = item.status === 'ongoing' && (typeof allowAttendance === 'undefined' || allowAttendance);
+
+  // Format the date - use startDate if available, otherwise use date
+  const dateToFormat = item.startDate || item.date;
+  const parsedDate = parseFlexibleDate(dateToFormat);
+  const formattedDate = parsedDate ? format(parsedDate, 'MMM d, yyyy') : 'Date not specified';
+  
+  // Get the first session time if available
+  const firstSession = item.sessions?.[0];
+  const timeDisplay = firstSession 
+    ? `${firstSession.day} ${firstSession.startTime} - ${firstSession.endTime}`
+    : 'Time not specified';
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 dark:shadow-lg dark:border dark:border-gray-700">
@@ -74,8 +88,8 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
         <div className="flex-1">
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[status]} dark:${statusColorsDark[status]}`}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.status]} dark:${statusColorsDark[item.status]}`}>
+                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
               </span>
             </div>
             <div>
@@ -83,9 +97,8 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
             </div>
           </div>
           <p className="font-medium mt-2 text-gray-800 dark:text-gray-100">{item.sessionTitle}</p>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{
-            start ? format(start, 'MMM d, yyyy') : 'Date not specified'
-          }</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{formattedDate}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{timeDisplay}</p>
           <div className="mt-2">
             <span className={`text-xs px-2 py-1 rounded ${
               item.visibility === 'public' 
@@ -97,7 +110,6 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
           </div>
         </div>
         <div className="text-right">
-          <p className="font-bold text-sm md:text-base dark:text-gray-200">{timeRemaining}</p>
           <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Venue: {item.venue}</p>
         </div>
       </div>
