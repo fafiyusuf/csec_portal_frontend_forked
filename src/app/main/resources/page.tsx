@@ -68,8 +68,11 @@ export default function ResourcesPage() {
         await addResource(resourceData)
       }
       closeModal()
-    } catch (error) {
-      console.error('Submission error:', error)
+    } catch (error: unknown) {
+      // Only log actual errors, not the "No resource data" error
+      if (error instanceof Error && !error.message?.includes('No resource data')) {
+        console.error('Submission error:', error)
+      }
     }
   }
 

@@ -53,12 +53,11 @@ export interface RequiredFormProps {
 export interface OptionalFormProps {
   data: Pick<FormData,
     | 'universityId'
-    | 'linkedin'
-    | 'codeforces'
+    | 'linkedinHandle'
+    | 'codeforcesHandle'
     | 'leetcode'
-    | 'instagram'
+    | 'instagramHandle'
     | 'cv'
-    | 'joiningDate'
     | 'bio'
   >;
   onUpdate: (data: Partial<Member>) => void;

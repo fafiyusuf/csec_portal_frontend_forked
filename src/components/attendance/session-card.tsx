@@ -9,10 +9,12 @@ import { useEffect } from "react"
 
 interface SessionCardProps {
   session: Session
-  onClick: () => void
+  attendanceTaken: boolean
+  onTakeAttendance: () => void
+  onViewAttendance: () => void
 }
 
-export default function SessionCard({ session, onClick }: SessionCardProps) {
+export default function SessionCard({ session, attendanceTaken, onTakeAttendance, onViewAttendance }: SessionCardProps) {
   // Helper function to format dates
   useEffect(() => {
   console.log("Fetched sessions:", session);
@@ -32,6 +34,26 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
     ? `${firstSessionTime.day} ${firstSessionTime.startTime} - ${firstSessionTime.endTime}`
     : "Time not specified"
 
+  let showButton = false;
+  let buttonLabel = "";
+  let buttonAction = () => {};
+  let buttonDisabled = false;
+
+  if (session.status.toLowerCase() === "ongoing") {
+    showButton = true;
+    if (attendanceTaken) {
+      buttonLabel = "View Attendance";
+      buttonAction = onViewAttendance;
+    } else {
+      buttonLabel = "Take Attendance";
+      buttonAction = onTakeAttendance;
+    }
+  } else if (session.status.toLowerCase() === "ended") {
+    showButton = true;
+    buttonLabel = "View Attendance";
+    buttonAction = onViewAttendance;
+  }
+
   return (
     <div className="border rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gray-800 dark:text-white">
       <div className="flex items-start justify-between">
@@ -42,6 +64,8 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
                 "px-3 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white",
                 session.status.toLowerCase() === "ended" 
                   ? "bg-red-100 text-red-800" 
+                  : session.status.toLowerCase() === "planned"
+                  ? "bg-yellow-100 text-yellow-800"
                   : "bg-green-100 text-green-800",
               )}
             >
@@ -55,12 +79,15 @@ export default function SessionCard({ session, onClick }: SessionCardProps) {
           </p>
           <p className="text-xs text-muted-foreground mt-1">{sessionTime}</p>
         </div>
-        <Button 
-          className="bg-blue-700 hover:bg-blue-800 text-white" 
-          onClick={onClick}
-        >
-          Attendance
-        </Button>
+        {showButton && (
+          <Button
+            className={buttonDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800 text-white"}
+            onClick={buttonAction}
+            disabled={buttonDisabled}
+          >
+            {buttonLabel}
+          </Button>
+        )}
       </div>
       <div className="flex gap-2 mt-4">
         {session.groups?.map((group) => (

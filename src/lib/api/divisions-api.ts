@@ -205,4 +205,9 @@ export const divisionsApi = {
       throw error;
     }
   },
+
+  getDivisionSummary: async () => {
+    const response = await apiClient.get("/divisions/divisionSummary");
+    return response.data;
+  },
 };

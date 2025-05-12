@@ -36,6 +36,7 @@ export default function AttendancePage() {
     itemsPerPage,
     totalSessions,
     setPagination,
+    attendanceTakenSessions,
   } = useAttendanceStore()
   
 
@@ -59,6 +60,9 @@ export default function AttendancePage() {
 
     return matchesSearch && matchesStatus && matchesDivision
   })
+
+  // Only show ongoing sessions
+  const ongoingSessions = sessions.filter(session => session.status.toLowerCase() === 'ongoing');
 
   const currentSessions = sessions
   const totalPages = Math.ceil(totalSessions / Number(itemsPerPage))
@@ -187,12 +191,14 @@ export default function AttendancePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {currentSessions.length > 0 ? (
-              currentSessions.map((session) => (
+            {sessions.length > 0 ? (
+              sessions.map((session) => (
                 <SessionCard
                   key={session._id}
                   session={session}
-                  onClick={() => router.push(`/main/attendance/${session._id}`)}
+                  attendanceTaken={attendanceTakenSessions.includes(session._id)}
+                  onTakeAttendance={() => router.push(`/main/attendance/${session._id}`)}
+                  onViewAttendance={() => router.push(`/main/attendance/${session._id}?view=readonly`)}
                 />
               ))
             ) : (

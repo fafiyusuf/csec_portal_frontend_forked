@@ -28,7 +28,7 @@ interface UserStore {
   updateLastSeen: () => Promise<void>;
 
   fetchUserById: (id: string) => Promise<User>;
-  updateUserProfile: (updates: Partial<User> | FormData) => Promise<void>;
+  updateUserProfile: (updates: Partial<User> | FormData) => Promise<any>;
 
   hasRole: (role: UserRole) => boolean;
   hasAnyRole: (roles: UserRole[]) => boolean;

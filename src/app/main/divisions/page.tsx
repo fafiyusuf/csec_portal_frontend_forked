@@ -19,21 +19,21 @@ export default function DivisionsPage() {
   const [error, setError] = useState<string | null>(null)
   const { user } = useUserStore()
 
-  const { divisions, loading, fetchDivisions, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
+  const { divisionSummaries, loading, fetchDivisionSummaries, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
 
   useEffect(() => {
-    const loadDivisions = async () => {
+    const loadSummaries = async () => {
       try {
-        await fetchDivisions()
+        await fetchDivisionSummaries()
         setError(null)
       } catch (err) {
-        setError("Failed to load divisions. Please try again later.")
+        setError("Failed to load division summaries. Please try again later.")
         console.error(err)
       }
     }
 
-    loadDivisions()
-  }, [fetchDivisions])
+    loadSummaries()
+  }, [fetchDivisionSummaries])
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value
@@ -44,8 +44,8 @@ export default function DivisionsPage() {
     }
   }
 
-  const filteredDivisions = divisions.filter(division =>
-    division.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredDivisions = divisionSummaries.filter(division =>
+    division.division.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
   return (
@@ -110,10 +110,16 @@ export default function DivisionsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredDivisions.map((division) => (
+            {filteredDivisions.map((summary) => (
               <DivisionCard
-                key={division.name}
-                division={division}
+                key={summary.division}
+                division={{
+                  name: summary.division,
+                  groups: summary.groups,
+                  memberCount: summary.groups.reduce((acc: number, g: any) => acc + (g.memberCount || 0), 0)
+                }}
+                groupCount={summary.groupCount}
+                memberCount={summary.groups.reduce((acc: number, g: any) => acc + (g.memberCount || 0), 0)}
               />
             ))}
           </div>

@@ -154,29 +154,38 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
         )
       }));
 
-      const updatedResource = await updateResourceApi(id, resource);
-      
-      // Log the response
-      console.log('Updated resource response:', updatedResource);
+      try {
+        const updatedResource = await updateResourceApi(id, resource);
+        
+        // Log the response
+        console.log('Updated resource response:', updatedResource);
 
-      // Validate the response
-      if (!updatedResource || !updatedResource._id) {
-        throw new Error('Invalid resource data received from server');
+        // Update with the real resource if we got one, otherwise keep the optimistic update
+        set(state => ({
+          resources: state.resources.map(r =>
+            r._id === id ? (updatedResource || { ...r, ...resource }) : r
+          ),
+          isLoading: false
+        }));
+
+        toast({
+          title: "Success",
+          description: "Resource updated successfully!",
+          variant: "default"
+        });
+      } catch (error) {
+        // If it's the "No resource data" error but update was successful, show success
+        if (error instanceof Error && error.message.includes('No resource data')) {
+          set({ isLoading: false });
+          toast({
+            title: "Success",
+            description: "Resource updated successfully!",
+            variant: "default"
+          });
+          return;
+        }
+        throw error; // Re-throw other errors
       }
-
-      // Update with the real resource
-      set(state => ({
-        resources: state.resources.map(r =>
-          r._id === id ? updatedResource : r
-        ),
-        isLoading: false
-      }));
-
-      toast({
-        title: "Success",
-        description: "Resource updated successfully!",
-        variant: "default"
-      });
     } catch (error) {
       // Revert the optimistic update on error
       await get().fetchResources();
@@ -188,7 +197,6 @@ export const useResourceStore = create<ResourceStore>((set, get) => ({
         description: errorMessage,
         variant: "destructive"
       });
-      throw error;
     }
   },
 

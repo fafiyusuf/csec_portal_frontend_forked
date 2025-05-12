@@ -30,6 +30,7 @@ interface DivisionsState {
   showAddDivisionDialog: boolean;
   showAddGroupDialog: boolean;
   showAddMemberDialog: boolean;
+  divisionSummaries: any[];
   setShowAddDivisionDialog: (show: boolean) => void;
   setShowAddGroupDialog: (show: boolean) => void;
   setShowAddMemberDialog: (show: boolean) => void;
@@ -53,6 +54,7 @@ interface DivisionsState {
   addMemberToDivision: (division: string, member: Omit<Member, '_id'>) => Promise<void>;
   addMember: (division: string, group: string, member: { firstName: string; lastName: string; email: string; generatedPassword: string }) => Promise<void>;
   addGroup: (division: string, groupName: string) => Promise<void>;
+  fetchDivisionSummaries: () => Promise<void>;
 }
 
 const useDivisionsStore = create<DivisionsState>((set, get) => ({
@@ -67,6 +69,7 @@ const useDivisionsStore = create<DivisionsState>((set, get) => ({
   showAddDivisionDialog: false,
   showAddGroupDialog: false,
   showAddMemberDialog: false,
+  divisionSummaries: [],
 
   setShowAddDivisionDialog: (show) => set({ showAddDivisionDialog: show }),
   setShowAddGroupDialog: (show) => set({ showAddGroupDialog: show }),
@@ -348,6 +351,16 @@ const useDivisionsStore = create<DivisionsState>((set, get) => ({
       }));
     } catch (error) {
       set({ error: error instanceof Error ? error.message : 'Failed to add member', loading: false });
+    }
+  },
+
+  fetchDivisionSummaries: async () => {
+    set({ loading: true, error: null });
+    try {
+      const summaries = await divisionsApi.getDivisionSummary();
+      set({ divisionSummaries: summaries, loading: false });
+    } catch (error) {
+      set({ error: error instanceof Error ? error.message : 'Failed to fetch division summaries', loading: false });
     }
   },
 }));

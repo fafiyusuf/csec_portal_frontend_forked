@@ -69,13 +69,16 @@ export const addResourceApi = async (resource: Omit<Resource, '_id' | '__v'>): P
   }
 };
 
-export const updateResourceApi = async (id: string, updates: Partial<Resource>): Promise<Resource> => {
+export const updateResourceApi = async (id: string, updates: Partial<Resource>): Promise<Resource | null | undefined> => {
   const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('No access token found');
   }
 
   try {
+    console.log('Making update request to:', `${API_BASE_URL}/${id}`);
+    console.log('Update payload:', updates);
+    
     const response = await axios.put(`${API_BASE_URL}/${id}`, updates, {
       headers: {
         'Content-Type': 'application/json',
@@ -83,26 +86,41 @@ export const updateResourceApi = async (id: string, updates: Partial<Resource>):
       },
     });
 
+    console.log('Update response:', response.data);
+
     if (response.status !== 200) {
       throw new Error(`Unexpected response status: ${response.status}`);
     }
 
-    // Check for both possible response formats
-    const updatedResource = response.data?.resource || response.data?.Resource;
-    if (!updatedResource) {
-      console.error('API Response:', response.data);
-      throw new Error('No resource data received in response');
+    // Try to get the updated resource from various possible response formats
+    const updatedResource = response.data?.resource || response.data?.Resource || response.data;
+    
+    // If we have a valid response with the required fields, return it
+    if (updatedResource && updatedResource._id) {
+      return updatedResource;
     }
 
-    return updatedResource;
+    // If we don't have a complete resource object but the update was successful,
+    // return null to indicate success but no resource data
+    if (response.status === 200) {
+      return null;
+    }
+
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.error('API Error Details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers
+      });
       const errorMessage = error.response?.data?.message || 'Failed to update resource';
-      console.error('API Error:', error.response?.data);
       throw new Error(errorMessage);
     }
     throw error;
   }
+
+  // Explicitly return undefined if no other return statement is reached
+  return undefined;
 };
 
 export const deleteResourceApi = async (id: string): Promise<void> => {
