@@ -3,11 +3,27 @@ import {
     fetchMemberAttendanceRecords as apiFetchMemberAttendance,
     fetchMemberAttendanceRecords as apiFetchMemberAttendanceRecords,
     fetchSessionData as apiFetchSessionData,
-    submitAttendance as apiSubmitAttendance
+    submitAttendance as apiSubmitAttendance,
+    fetchSessionAttendance as apiFetchSessionAttendance
 } from "@/lib/api/attendanceApi";
 import type { Member, MemberAttendanceRecords, Session } from "@/types/attendance";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { toast } from '@/components/ui/use-toast';
+import { canManageDivision } from '@/lib/divisionPermissions';
+import { UserRole } from '@/utils/roles';
+
+export type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
+
+export type AttendanceRecord = {
+  id: string;
+  memberId: string;
+  memberName: string;
+  division: string;
+  date: string;
+  status: AttendanceStatus;
+  notes?: string;
+};
 
 interface AttendanceState {
   currentSession: Session | null;
@@ -23,6 +39,7 @@ interface AttendanceState {
   currentPage: number;
   itemsPerPage: number;
   attendanceTakenSessions: string[];
+  sessionAttendance: Record<string, any> | null;
 
   // Actions
   fetchSessions: (page?: number, limit?: number) => Promise<void>;
@@ -37,6 +54,8 @@ interface AttendanceState {
   setSelectedMember: (memberId: string | null) => void;
   clearError: () => void;
   clearSuccess: () => void;
+  fetchSessionAttendance: (sessionId: string) => Promise<void>;
+  setAttendanceTakenSessions: (callback: (prev: string[]) => string[]) => void;
 }
 
 export const useAttendanceStore = create<AttendanceState>()(
@@ -56,6 +75,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         currentPage: 1,
         itemsPerPage: 4,
         attendanceTakenSessions: [],
+        sessionAttendance: null,
 
         fetchSessions: async (page = get().currentPage, limit = get().itemsPerPage) => {
           set({ isLoading: true, error: null });
@@ -112,32 +132,11 @@ export const useAttendanceStore = create<AttendanceState>()(
         fetchMemberAttendanceRecords: async (memberId) => {
           set({ isLoading: true, error: null });
           try {
-            console.log('[Store] Fetching records for:', memberId);
             const data = await apiFetchMemberAttendanceRecords(memberId);
-            
-            console.log('[Store] Received data:', JSON.stringify(data, null, 2));
-            
-            // Validate records exist
-            const hasRecords = data.week.records.length > 0 || 
-                              data.month.records.length > 0 || 
-                              data.overall.records.length > 0;
-            
-            if (!hasRecords) {
-              console.warn('[Store] No records found in response');
-            }
-        
-            set({
-              memberAttendanceRecords: data,
-              isLoading: false,
-            });
+            set({ memberAttendanceRecords: data, isLoading: false });
           } catch (error) {
-            console.error('[Store] Error details:', {
-              error,
-              memberId,
-              time: new Date().toISOString()
-            });
             set({
-              error: error instanceof Error ? error.message : "Failed to fetch records",
+              error: error instanceof Error ? error.message : "Failed to fetch member records",
               isLoading: false,
             });
           }
@@ -154,7 +153,7 @@ export const useAttendanceStore = create<AttendanceState>()(
         updateMemberExcused: (memberId, excused) => {
           set((state) => ({
             members: state.members.map((member) =>
-              member._id === memberId ? { ...member, excused } : member,
+              member._id === memberId ? { ...member, excused } : member
             ),
           }));
         },
@@ -162,59 +161,44 @@ export const useAttendanceStore = create<AttendanceState>()(
         addHeadsUpNote: (memberId, note) => {
           set((state) => ({
             members: state.members.map((member) =>
-              member._id === memberId ? { ...member, headsUpNote: note } : member,
+              member._id === memberId ? { ...member, headsUpNote: note } : member
             ),
           }));
         },
 
-        saveAttendance: async (sessionId: string): Promise<{ status: string; error?: string }> => {
-          set({ isLoading: true, error: null, success: null });
+        saveAttendance: async (sessionId) => {
+          set({ isLoading: true, error: null });
           try {
-            const { members, attendanceTakenSessions, sessions } = get();
-            // Prevent duplicate attendance
-            if (attendanceTakenSessions.includes(sessionId)) {
-              set({ isLoading: false });
-              return { status: 'already_taken' };
-            }
-            // Find session and check if it's ongoing
-            const session = sessions.find(s => s._id === sessionId);
-            if (!session) {
-              set({ isLoading: false });
-              return { status: 'invalid_session' };
-            }
-            // Only allow if session is ongoing
-            if (session.status.toLowerCase() !== 'ongoing') {
-              set({ isLoading: false });
-              return { status: 'not_allowed' };
-            }
-            const membersWithAttendance = members.filter((member) => member.attendance !== null);
+            const { members } = get();
             const payload = {
               sessionId,
-              records: membersWithAttendance.map((member) => ({
+              records: members.map(member => ({
                 memberId: member._id,
-                status: member.attendance!,
+                status: member.attendance || "Absent",
                 excused: member.excused || false,
                 ...(member.headsUpNote && { headsUp: member.headsUpNote })
-              })),
+              }))
             };
             await apiSubmitAttendance(payload);
             set(state => ({
-              isLoading: false,
-              success: 'Attendance saved successfully!',
               attendanceTakenSessions: [...state.attendanceTakenSessions, sessionId],
+              isLoading: false,
+              success: "Attendance saved successfully!"
             }));
-            return { status: 'success' };
+            return { status: "success" };
           } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Failed to save attendance';
             set({
-              error: errorMessage,
+              error: error instanceof Error ? error.message : "Failed to save attendance",
               isLoading: false,
             });
-            return { status: 'error', error: errorMessage };
+            return { 
+              status: "error", 
+              error: error instanceof Error ? error.message : "Failed to save attendance" 
+            };
           }
         },
 
-        setSelectedMember: (memberId: string | null) => {
+        setSelectedMember: (memberId) => {
           set({ selectedMember: memberId });
         },
 
@@ -225,10 +209,29 @@ export const useAttendanceStore = create<AttendanceState>()(
         clearSuccess: () => {
           set({ success: null });
         },
+
+        fetchSessionAttendance: async (sessionId) => {
+          set({ isLoading: true, error: null });
+          try {
+            const attendance = await apiFetchSessionAttendance(sessionId);
+            set({ sessionAttendance: attendance, isLoading: false });
+          } catch (error) {
+            set({
+              error: error instanceof Error ? error.message : "Failed to fetch session attendance",
+              isLoading: false,
+            });
+          }
+        },
+
+        setAttendanceTakenSessions: (callback) => {
+          set((state) => ({
+            attendanceTakenSessions: callback(state.attendanceTakenSessions)
+          }));
+        },
       }),
       {
         name: "attendance-storage",
-      },
-    ),
-  ),
-);
+      }
+    )
+  )
+); 

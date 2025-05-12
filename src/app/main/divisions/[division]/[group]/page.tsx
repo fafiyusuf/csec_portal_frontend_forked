@@ -127,7 +127,7 @@ export default function GroupMembersPage() {
   const canManage = user?.member?.clubRole && canManageMembers(user.member.clubRole, divisionName);
 
   const handleProfileClick = (memberId: string) => {
-    router.push(`/main/profile/${memberId}`);
+    router.push(`/main/members/${memberId}`);
   };
 
   // Debug logging for render
@@ -193,11 +193,11 @@ export default function GroupMembersPage() {
             <Button onClick={() => setShowAddMemberDialog(true)}>Add Member</Button>
           )}
           <div className="flex gap-2">
-            <Button variant="outline" className="gap-2">
+            {/* <Button variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Import
-            </Button>
-            <DropdownMenu>
+            </Button> */}
+            {/* <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
                   <Filter className="h-4 w-4" />
@@ -210,7 +210,7 @@ export default function GroupMembersPage() {
                 <DropdownMenuItem onClick={() => handleFilterChange("inactive")}>Inactive</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleFilterChange("pending")}>Pending</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> */}
           </div>
         </div>
 

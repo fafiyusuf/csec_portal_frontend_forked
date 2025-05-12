@@ -65,7 +65,7 @@ interface AvatarImageProps extends Omit<ImageProps, 'alt'> {
 }
 
 export const AvatarImage = React.forwardRef<HTMLImageElement, AvatarImageProps>(
-  ({ className, alt, fill = true, src, identifier, robohashSet = "set4", ...props }, ref) => {
+  ({ className, alt, fill = true, src, identifier, robohashSet = "set3", ...props }, ref) => {
     const { setIsImageLoaded } = useAvatarContext()
     
     // Generate RoboHash URL if no src is provided

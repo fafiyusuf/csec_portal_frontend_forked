@@ -178,7 +178,7 @@ const CalendarSidebar = () => {
       
       <div className="space-y-4">
         <div>
-          <h3 className="font-bold mb-2 text-sm">
+          <h3 className="font-bold mb-2 text-xs">
             {currentDate.toLocaleDateString('en-US', { 
               weekday: 'long', 
               day: 'numeric', 
@@ -196,7 +196,7 @@ const CalendarSidebar = () => {
                     item.type === 'session' ? 'border-blue-500' : 'border-green-500'
                   }`}
                 >
-                  <div className="font-medium text-sm">
+                  <div className="font-medium text-xs">
                     {item.time} <span className={item.type === 'session' ? 'text-blue-500' : 'text-green-500'}>
                       {item.title}
                     </span>
@@ -210,12 +210,12 @@ const CalendarSidebar = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No items scheduled</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs">No items scheduled</p>
           )}
         </div>
 
         <div>
-          <h3 className="font-bold mb-3 text-sm">Upcoming in 7 Days</h3>
+          <h3 className="font-bold mb-3 text-xs">Upcoming in 7 Days</h3>
           {upcomingItems.length > 0 ? (
             <div className="space-y-3">
               {upcomingItems.map((item, index) => (
@@ -225,7 +225,7 @@ const CalendarSidebar = () => {
                     item.type === 'session' ? 'border-blue-500' : 'border-green-500'
                   }`}
                 >
-                  <div className="font-medium text-sm">
+                  <div className="font-medium text-xs">
                     <span className="text-gray-600 dark:text-gray-400 mr-2">
                       {item.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                     </span>
@@ -242,7 +242,7 @@ const CalendarSidebar = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 dark:text-gray-400 text-sm">No upcoming events</p>
+            <p className="text-gray-500 dark:text-gray-400 text-xs">No upcoming events</p>
           )}
         </div>
       </div>

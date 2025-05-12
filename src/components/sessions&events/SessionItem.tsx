@@ -3,10 +3,13 @@ import { format, parse } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { useUserStore } from '@/stores/userStore';
+import { getDivisionFromRole } from '@/lib/divisionPermissions';
+import { UserRole } from '@/utils/roles';
 
 type SessionItemProps = {
   item: {
-    status: 'planned' | 'ongoing' | 'ended';
+    status: 'planned' | 'ongoing' | 'ended' | 'on-going';
     division: string;
     sessionTitle: string;
     startDate: string;
@@ -45,6 +48,10 @@ const parseFlexibleDate = (dateString: string | undefined) => {
 
 const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemProps) => {
   const router = useRouter();
+  const { user } = useUserStore();
+  const userRole = user?.member?.clubRole;
+  const userDivision = getDivisionFromRole(userRole);
+  const canManageAttendance = userRole === 'President' || (userDivision && userDivision === item.division);
   
   const handleAttendanceClick = () => {
     const sessionId = item._id || item.id;
@@ -59,17 +66,19 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
 
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
+    'on-going': 'bg-blue-50 text-blue-400',
     ongoing: 'bg-blue-50 text-blue-400',
     ended: 'bg-red-50 text-red-400'
   };
   const statusColorsDark = {
     planned: 'bg-blue-900 text-blue-100',
+    'on-going': 'bg-green-900 text-green-100',
     ongoing: 'bg-green-900 text-green-100',
     ended: 'bg-gray-700 text-gray-200',
   };
 
-  // Only show attendance button for ongoing sessions
-  const showAttendanceButton = item.status === 'ongoing' && (typeof allowAttendance === 'undefined' || allowAttendance);
+  // Only show attendance button for ongoing sessions and if user has permission
+  const showAttendanceButton = (item.status === 'ongoing' || item.status === 'on-going') && canManageAttendance;
 
   // Format the date - use startDate if available, otherwise use date
   const dateToFormat = item.startDate || item.date;
@@ -89,7 +98,7 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
           <div className="flex flex-col md:flex-row md:items-center gap-3">
             <div>
               <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[item.status]} dark:${statusColorsDark[item.status]}`}>
-                {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                {item.status === 'ongoing' || item.status === 'on-going' ? 'On-going' : item.status.charAt(0).toUpperCase() + item.status.slice(1)}
               </span>
             </div>
             <div>
@@ -145,7 +154,7 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
               className="bg-blue-700 hover:bg-blue-800 text-white" 
               onClick={handleAttendanceClick}
             >
-              Attendance
+              Take Attendance
             </Button>
           )}
         </div>

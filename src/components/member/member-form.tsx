@@ -5,6 +5,9 @@ import useMembersStore from "@/stores/membersStore"
 import { UserRole } from "@/types/member"
 import { useEffect, useRef, useState } from "react"
 import { FiPlusCircle } from "react-icons/fi"
+import { useUserStore } from "@/stores/userStore"
+import { isPresident } from "@/utils/roles"
+import { getDivisionFromRole } from "@/lib/divisionPermissions"
 
 interface MemberFormProps {
   onSubmit?: (memberData: any) => Promise<void>;
@@ -14,6 +17,7 @@ interface MemberFormProps {
 export function MemberForm({ onSubmit, onClose }: MemberFormProps) {
   const { addMember } = useMembersStore()
   const { toast } = useToast()
+  const { user } = useUserStore();
   const [isOpen, setIsOpen] = useState(false)
   const [email, setEmail] = useState("")
   const [firstName, setFirstName] = useState("")
@@ -195,6 +199,16 @@ export function MemberForm({ onSubmit, onClose }: MemberFormProps) {
       document.removeEventListener("keydown", handleEscKey)
     }
   }, [isOpen])
+  
+  // Only allow add member for President, Vice President, or division heads
+  const userRole = user?.member?.clubRole;
+  const userDivision = getDivisionFromRole(userRole);
+  const canAdd = isPresident(userRole) || (userDivision && userDivision !== 'all');
+
+  if (!canAdd) {
+    // If this is a profile edit, allow only if editing own profile (not handled here)
+    return null;
+  }
   
   return (
     <>

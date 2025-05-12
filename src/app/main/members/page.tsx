@@ -187,53 +187,51 @@ export default function MembersPage() {
               onChange={handleSearch} 
             />
           </div>
-          <Button
+          {/* <Button
             variant="outline"
             className="flex items-center gap-2 w-full sm:w-auto dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
             onClick={() => setShowFilters(!showFilters)}
           >
             <Filter className="h-4 w-4" />
             <span>Filters</span>
-          </Button>
+          </Button> */}
         </div>
   
-        {showFilters && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full mt-4">
-            <select
-              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-              value={filterOptions.division}
-              onChange={(e) => handleFilterChange({ ...filterOptions, division: e.target.value })}
-            >
-              <option value="">All Divisions</option>
-              <option value="Competitive Programming Division">Competitive Programming Division</option>
-              <option value="Development Division">Development Division</option>
-              <option value="Capacity Building Division">Capacity Building Division</option>
-              <option value="Cybersecurity Division">Cybersecurity Division</option>
-              <option value="Data Science Division">Data Science Division</option>
-            </select>
-  
-            <select
-              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-              value={filterOptions.membershipStatus}
-              onChange={(e) => handleFilterChange({ ...filterOptions, membershipStatus: e.target.value })}
-            >
-              <option value="">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="banned">Banned</option>
-            </select>
-  
-            <select
-              className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
-              value={filterOptions.campusStatus}
-              onChange={(e) => handleFilterChange({ ...filterOptions, campusStatus: e.target.value })}
-            >
-              <option value="">All Campus Statuses</option>
-              <option value="on-campus">On Campus</option>
-              <option value="off-campus">Off Campus</option>
-            </select>
-          </div>
-        )}
+        {/* <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 w-full mt-4">
+          <select
+            className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            value={filterOptions.division}
+            onChange={(e) => handleFilterChange({ ...filterOptions, division: e.target.value })}
+          >
+            <option value="">All Divisions</option>
+            <option value="Competitive Programming Division">Competitive Programming Division</option>
+            <option value="Development Division">Development Division</option>
+            <option value="Capacity Building Division">Capacity Building Division</option>
+            <option value="Cybersecurity Division">Cybersecurity Division</option>
+            <option value="Data Science Division">Data Science Division</option>
+          </select>
+
+          <select
+            className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            value={filterOptions.membershipStatus}
+            onChange={(e) => handleFilterChange({ ...filterOptions, membershipStatus: e.target.value })}
+          >
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="banned">Banned</option>
+          </select>
+
+          <select
+            className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+            value={filterOptions.campusStatus}
+            onChange={(e) => handleFilterChange({ ...filterOptions, campusStatus: e.target.value })}
+          >
+            <option value="">All Campus Statuses</option>
+            <option value="on-campus">On Campus</option>
+            <option value="off-campus">Off Campus</option>
+          </select>
+        </div> */}
   
         {/* Members Table */}
         <div className="rounded-md border overflow-hidden dark:border-gray-800">

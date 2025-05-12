@@ -21,6 +21,7 @@ import { UserRole } from "@/types/member"
 import { AlertCircle, ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import axios from "axios"
 
 export default function MembersAttendancePage() {
   const router = useRouter()
@@ -37,6 +38,8 @@ export default function MembersAttendancePage() {
     addHeadsUpNote,
     saveAttendance,
     clearError,
+    fetchSessionAttendance,
+    setAttendanceTakenSessions,
   } = useAttendanceStore()
   const { toast } = useToast()
 
@@ -54,8 +57,12 @@ export default function MembersAttendancePage() {
   useEffect(() => {
     if (groupId) {
       fetchSessionMembers(groupId as string)
+      // If session is ended, fetch the attendance records
+      if (currentSession?.status.toLowerCase() === 'ended') {
+        fetchSessionAttendance(groupId as string)
+      }
     }
-  }, [groupId, fetchSessionMembers])
+  }, [groupId, fetchSessionMembers, currentSession?.status])
 
   // Filter members based on search query and filters
   const filteredMembers = members.filter((member) => {
@@ -83,14 +90,9 @@ export default function MembersAttendancePage() {
   const currentMembers = filteredMembers.slice(startIndex, endIndex)
 
   // Helper: check if attendance can be taken
-  const isStarted = currentSession && currentSession.status=='on-going' ;
-  const isAttendanceTaken = useAttendanceStore.getState().attendanceTakenSessions.includes(currentSession?._id || "");
-  const canTakeAttendance = isStarted && !isAttendanceTaken;
-  useEffect(()=>{
-    console.log(canTakeAttendance)
-    console.log(isStarted,'is started')
-    console.log(isAttendanceTaken)
-  },[canTakeAttendance])
+  const isStarted = currentSession && ["ongoing", "on-going"].includes(currentSession.status.toLowerCase());
+  const isAttendanceTaken = useAttendanceStore.getState().attendanceTakenSessions.includes(currentSession?._id || "")
+  const canTakeAttendance = isStarted && !isAttendanceTaken
 
   const handleAttendanceChange = (memberId: string, status: "Present" | "Absent") => {
     updateMemberAttendance(memberId, status)
@@ -115,47 +117,71 @@ export default function MembersAttendancePage() {
   }
 
   const handleSave = async () => {
-    if (!currentSession?._id) return;
+    if (!currentSession?._id) return
+    
     if (!canTakeAttendance) {
-      console.log('saved', currentSession)
       toast({
         title: "Attendance Not Allowed",
         description: isAttendanceTaken
           ? "Attendance has already been taken for this session."
-          : "Attendance can only be taken for today's session and not for ended/planned sessions.",
+          : currentSession.status.toLowerCase() === 'planned'
+          ? "Cannot take attendance for planned sessions."
+          : "This session has ended. You can only view the attendance.",
         variant: "destructive",
-      });
-
-      return;
+      })
+      return
     }
-    setIsSaving(true);
-    const result = await saveAttendance(currentSession._id);
-    setIsSaving(false);
-    if (result.status === "success") {
-      toast({
-        title: "Attendance Saved",
-        description: "Attendance has been saved successfully!",
-      });
-    } else if (result.status === "already_taken") {
-      toast({
-        title: "Already Taken",
-        description: "Attendance has already been taken for this session.",
-        variant: "destructive",
-      });
-    } else if (result.status === "not_allowed") {
-      toast({
-        title: "Attendance Not Allowed",
-        description: "Attendance can only be taken for today's session and not for ended/planned sessions.",
-        variant: "destructive",
-      });
-    } else {
+
+    setIsSaving(true)
+    try {
+      const token = localStorage.getItem('token')
+      const sessionTime = currentSession.sessions?.[0] || {};
+      const payload = {
+        sessionId: currentSession._id,
+        records: members.map(member => ({
+          memberId: member._id,
+          status: member.attendance || "Absent",
+          ...(member.excused && { status: "Excused" }),
+          headsUp: member.headsUpNote ? member.headsUpNote : '',
+          sessionTitle: currentSession.sessionTitle || "N/A",
+          day: sessionTime.day || '',
+          startTime: sessionTime.startTime || '',
+          endTime: sessionTime.endTime || ''
+        }))
+      }
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE}/attendance`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (response.data) {
+        toast({
+          title: "Attendance Saved",
+          description: "Attendance has been saved successfully!",
+        })
+        // Update local state to reflect attendance taken
+        setAttendanceTakenSessions(prev => [...prev, currentSession._id])
+        // Refresh the session data to get updated attendance
+        fetchSessionMembers(currentSession._id)
+      }
+    } catch (error) {
+      console.error('Error saving attendance:', error)
       toast({
         title: "Error",
-        description: result.error || "Failed to save attendance.",
+        description: error instanceof Error ? error.message : "Failed to save attendance.",
         variant: "destructive",
-      });
+      })
+    } finally {
+      setIsSaving(false)
     }
-  };
+  }
 
   // Handle attendance filter change
   const handleAttendanceFilterChange = (status: string) => {

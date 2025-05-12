@@ -1,37 +1,6 @@
 import type { AttendanceSubmission, Member, MemberAttendanceRecords, Session } from "@/types/attendance";
+import apiClient from './client';
 import axios from 'axios';
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE;
-
-// Create an Axios instance with default config
-const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
-
-// Add request interceptor to inject the token
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-}, (error) => {
-  return Promise.reject(error);
-});
-
-// Function to fetch sessions and members for a specific session
-export async function fetchSessionData(sessionId: string): Promise<{ session: Session; members: Member[] }> {
-  try {
-    const response = await apiClient.get(`/attendance/data/${sessionId}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching session data:", error);
-    throw error;
-  }
-}
 
 // Function to fetch member's attendance summary
 export const fetchMemberAttendanceRecords = async (memberId: string): Promise<MemberAttendanceRecords> => {
@@ -59,17 +28,28 @@ export const fetchMemberAttendanceRecords = async (memberId: string): Promise<Me
   }
 };
 
-// Function to submit attendance
-export async function submitAttendance(data: AttendanceSubmission): Promise<any> {
+// Function to fetch sessions and members for a specific session
+export async function fetchSessionData(sessionId: string): Promise<{ session: Session; members: Member[] }> {
   try {
-    const response = await apiClient.post('/attendance', data);
+    const response = await apiClient.get(`/attendance/data/${sessionId}`);
     return response.data;
+  } catch (error) {
+    console.error("Error fetching session data:", error);
+    throw error;
+  }
+}
+
+// Function to submit attendance
+export async function submitAttendance(payload: AttendanceSubmission): Promise<void> {
+  try {
+    await apiClient.post('/attendance', payload);
   } catch (error) {
     console.error("Error submitting attendance:", error);
     throw error;
   }
 }
 
+// Function to fetch all sessions
 export async function fetchAllSessions(page = 1, limit = 4): Promise<{ sessions: Session[]; totalSessions: number }> {
   try {
     const response = await apiClient.get('/sessions', {
@@ -83,7 +63,11 @@ export async function fetchAllSessions(page = 1, limit = 4): Promise<{ sessions:
       totalSessions: response.data.totalSessions,
     };
   } catch (error) {
-    console.error("Error fetching sessions:", error);
+    if (axios.isAxiosError(error)) {
+      console.error("Error fetching sessions:", error.response?.data || error.message);
+    } else {
+      console.error("Error fetching sessions:", error);
+    }
     throw error;
   }
 }
@@ -102,5 +86,16 @@ export async function fetchMemberById(id: string) {
     } else {
       throw new Error(`Failed to fetch member: ${String(error)}`);
     }
+  }
+}
+
+// Function to fetch session attendance records
+export async function fetchSessionAttendance(sessionId: string) {
+  try {
+    const response = await apiClient.get(`/attendance/session/${sessionId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching session attendance:", error);
+    throw error;
   }
 }

@@ -5,6 +5,8 @@ import { divisionsApi } from '@/lib/api/divisions-api';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
 import { FiX } from 'react-icons/fi';
+import { useUserStore } from "@/stores/userStore"
+import { canCreateSessionsAndEvents, canManageSessionsAndEvents } from "@/lib/divisionPermissions"
 
 type Session = {
   day: string;
@@ -48,14 +50,35 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
       sessions: editingItem?.sessions || [],
       newSession: { day: '', startTime: '', endTime: '' },
     },
-    enableReinitialize: true, // This ensures that the form will reinitialize when `editingItem` changes
+    enableReinitialize: true,
     onSubmit: (values) => {
+      // Validate required fields
+      if (!values.sessionTitle || !values.division || !values.startDate || !values.endDate) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please fill in all required fields."
+        });
+        return;
+      }
+
       // Always include the last session if filled
       let sessions = values.sessions;
       const { day, startTime, endTime } = values.newSession;
       if (day && startTime && endTime) {
         sessions = [...sessions, { day, startTime, endTime }];
       }
+
+      // Validate sessions
+      if (!Array.isArray(sessions) || sessions.length === 0) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please add at least one session."
+        });
+        return;
+      }
+
       // Ensure groups is always an array
       const groups = Array.isArray(values.groups) ? values.groups : [values.groups];
       // Ensure date strings are in YYYY-MM-DD format
@@ -68,31 +91,28 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
         endDate: formatDate(values.endDate),
         sessions,
       };
-      // Logging for debugging
-      console.log('Submitting session:', sessionData);
-      // Extra validation
-      if (!sessionData.sessionTitle || !sessionData.division || !sessionData.startDate || !sessionData.endDate) {
-        toast({ title: 'Error', description: 'Please fill all required fields.', variant: 'destructive' });
-        return;
-      }
-      if (!Array.isArray(sessionData.groups) || sessionData.groups.length === 0) {
-        toast({ title: 'Error', description: 'Please select at least one group.', variant: 'destructive' });
-        return;
-      }
-      if (!Array.isArray(sessionData.sessions) || sessionData.sessions.length === 0) {
-        toast({ title: 'Error', description: 'Please add at least one session.', variant: 'destructive' });
-        return;
-      }
-      // Check each session object
-      for (const s of sessionData.sessions) {
-        if (!s.day || !s.startTime || !s.endTime) {
-          toast({ title: 'Error', description: 'Each session must have a day, start time, and end time.', variant: 'destructive' });
-          return;
-        }
-      }
+
       handleSubmit(sessionData);
     }
   });
+
+  const { user } = useUserStore();
+  const userRole = user?.member?.clubRole;
+
+  // Check if user can create sessions
+  if (!canCreateSessionsAndEvents(userRole)) {
+    return null;
+  }
+
+  // Check if user can manage sessions for the selected division
+  if (editingItem?.division && !canManageSessionsAndEvents(userRole, editingItem.division)) {
+    toast({
+      variant: "destructive",
+      title: "Access Denied",
+      description: "You don't have permission to manage sessions for this division."
+    });
+    return null;
+  }
 
   const [loading, setLoading] = useState(false);
   const [divisionOptions, setDivisionOptions] = useState<string[]>([]);
@@ -100,11 +120,17 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
 
   const handleAddSession = () => {
     const { day, startTime, endTime } = formik.values.newSession;
-    if (day && startTime && endTime) {
-      const updatedSessions = [...formik.values.sessions, { day, startTime, endTime }];
-      formik.setFieldValue('sessions', updatedSessions);
-      formik.setFieldValue('newSession', { day: '', startTime: '', endTime: '' });
+    if (!day || !startTime || !endTime) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please fill in all session details (day, start time, and end time)."
+      });
+      return;
     }
+    const updatedSessions = [...formik.values.sessions, { day, startTime, endTime }];
+    formik.setFieldValue('sessions', updatedSessions);
+    formik.setFieldValue('newSession', { day: '', startTime: '', endTime: '' });
   };
 
   const handleRemoveSession = (index: number) => {
@@ -124,12 +150,16 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
       setDivisionsLoading(true);
       divisionsApi.getAllDivisions()
         .then((divisions) => {
-          console.log('Fetched divisions:', divisions);
           setDivisionOptions(Array.isArray(divisions) ? divisions : []);
         })
         .catch((error) => {
           console.error('Error fetching divisions:', error);
           setDivisionOptions([]);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch divisions. Please try again."
+          });
         })
         .finally(() => setDivisionsLoading(false));
     }
@@ -146,10 +176,19 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
     setLoading(true);
     try {
       await onSubmit(sessionData);
-      toast({ title: 'Success', description: 'Session created successfully!', variant: 'default' });
+      toast({ 
+        title: 'Success', 
+        description: 'Session created successfully!', 
+        variant: 'default',
+        className: "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800"
+      });
       onClose();
     } catch (err) {
-      toast({ title: 'Error', description: 'Failed to create session. Please try again.', variant: 'destructive' });
+      toast({ 
+        title: 'Error', 
+        description: 'Failed to create session. Please try again.', 
+        variant: 'destructive' 
+      });
     } finally {
       setLoading(false);
     }
@@ -222,6 +261,7 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
               name="startDate" 
               value={formik.values.startDate} 
               onChange={formik.handleChange} 
+              required
             />
             <input 
               type="date" 
@@ -230,6 +270,7 @@ const CreateSessionModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateSe
               name="endDate" 
               value={formik.values.endDate} 
               onChange={formik.handleChange} 
+              required
             />
           </div>
 

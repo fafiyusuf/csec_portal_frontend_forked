@@ -59,8 +59,13 @@ export default function Sidebar({ isMobileMenuOpen, onClose }: SidebarProps) {
   }, []);
 
   const filteredNavItems = navItems.filter((item) => {
+    // Hide 'Administration' and 'Add Division' for non-admins
     if (item.adminOnly) {
       return user?.member?.clubRole === 'President' || user?.member?.clubRole === 'Vice President';
+    }
+    // Hide 'Attendances' for members
+    if (item.name === 'Attendances') {
+      return user?.member?.clubRole !== 'Member';
     }
     return true;
   });

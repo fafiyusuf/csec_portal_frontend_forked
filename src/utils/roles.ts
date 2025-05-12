@@ -47,6 +47,8 @@ export const canViewAdminPanel = (role: UserRole | undefined): boolean => {
 };
 
 export const canAddMembers = (role: UserRole | undefined): boolean => {
+  if (!role) return false;
+  if (role === 'Member') return false;
   return isPresident(role) || isDivisionPresident(role);
 };
 

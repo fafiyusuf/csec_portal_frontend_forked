@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label"
 import { toast } from "@/components/ui/use-toast"
 import { useDivisionsStore } from "@/stores/DivisionStore"
 import { useState } from "react"
+import { useUserStore } from "@/stores/userStore"
+import { canAddMembersToDivision } from "@/lib/divisionPermissions"
 
 interface AddMemberDialogProps {
   open: boolean
@@ -23,6 +25,12 @@ export function AddMemberDialog({ open, onOpenChange, divisionId, groupId }: Add
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const { addMember, fetchGroupMembers } = useDivisionsStore()
+  const { user } = useUserStore();
+
+  // Only allow if user can add members to this division
+  if (!canAddMembersToDivision(user?.member?.clubRole, divisionId)) {
+    return null;
+  }
 
   const handleSubmit = async () => {
     if (!email || !firstName || !lastName) {

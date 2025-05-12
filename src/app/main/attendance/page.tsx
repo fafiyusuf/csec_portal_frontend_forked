@@ -16,40 +16,93 @@ import { useUserStore } from "@/stores/userStore"
 import { AlertCircle, ChevronLeft, ChevronRight, Filter, Search } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import type { Session } from "@/types/attendance"
+import axios from 'axios'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE
 
 export default function AttendancePage() {
   const router = useRouter()
   const { user } = useUserStore()
-  // const { sessions, isLoading, error, fetchSessions, clearError } = useAttendanceStore()
   const [searchQuery, setSearchQuery] = useState("")
-  // const [itemsPerPage, setItemsPerPage] = useState("4")
-  // const [currentPage, setCurrentPage] = useState(1)
   const [filterStatus, setFilterStatus] = useState<string[]>([])
   const [filterDivisions, setFilterDivisions] = useState<string[]>([])
-  const {
-    sessions,
-    isLoading,
-    error,
-    fetchSessions,
-    clearError,
-    currentPage,
-    itemsPerPage,
-    totalSessions,
-    setPagination,
-    attendanceTakenSessions,
-  } = useAttendanceStore()
-  
+  const [sessions, setSessions] = useState<Session[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(4)
+  const [totalSessions, setTotalSessions] = useState(0)
+  const [attendanceTakenSessions, setAttendanceTakenSessions] = useState<string[]>([])
 
   // Get unique divisions
-  const divisions = [...new Set(sessions.map((session) => session.division))]
+  const divisions = [...new Set((sessions || []).map((session) => session.division))]
 
   // Fetch sessions on mount
   useEffect(() => {
-    fetchSessions(currentPage, itemsPerPage)
+    const fetchSessions = async () => {
+      setIsLoading(true)
+      try {
+        const token = localStorage.getItem('token')
+        const response = await axios.get(`${API_BASE_URL}/sessions`, {
+          params: {
+            page: currentPage,
+            limit: itemsPerPage
+          },
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+        
+        if (response.data) {
+          setSessions(response.data.sessions)
+          setTotalSessions(response.data.totalSessions)
+        }
+      } catch (error) {
+        console.error('Error fetching sessions:', error)
+        setError(error instanceof Error ? error.message : 'Failed to fetch sessions')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchSessions()
   }, [currentPage, itemsPerPage])
 
+  // Function to check if attendance is taken for a session
+  const checkAttendanceStatus = async (sessionId: string) => {
+    try {
+      const token = localStorage.getItem('token')
+      const response = await axios.get(`${API_BASE_URL}/attendance/status/${sessionId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      })
+      return response.data.attendanceTaken
+    } catch (error) {
+      console.error('Error checking attendance status:', error)
+      return false
+    }
+  }
+
+  // Update attendance status for all sessions
+  useEffect(() => {
+    const updateAttendanceStatus = async () => {
+      const takenSessions: string[] = []
+      for (const session of sessions) {
+        const isTaken = await checkAttendanceStatus(session._id)
+        if (isTaken) {
+          takenSessions.push(session._id)
+        }
+      }
+      setAttendanceTakenSessions(takenSessions)
+    }
+    if (sessions.length > 0) {
+      updateAttendanceStatus()
+    }
+  }, [sessions])
+
   // Filter sessions based on search query and filters
-  const filteredSessions = sessions.filter((session) => {
+  const filteredSessions = (sessions || []).filter((session) => {
     const matchesSearch =
       session.sessionTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.division.toLowerCase().includes(searchQuery.toLowerCase())
@@ -62,9 +115,9 @@ export default function AttendancePage() {
   })
 
   // Only show ongoing sessions
-  const ongoingSessions = sessions.filter(session => session.status.toLowerCase() === 'ongoing');
+  const ongoingSessions = (sessions || []).filter(session => session.status.toLowerCase() === 'ongoing')
 
-  const currentSessions = sessions
+  const currentSessions = sessions || []
   const totalPages = Math.ceil(totalSessions / Number(itemsPerPage))
 
   // Handle filter status change
@@ -87,7 +140,7 @@ export default function AttendancePage() {
           </AlertDescription>
         </Alert>
       </div>
-    );
+    )
   }
 
   return (
@@ -98,7 +151,7 @@ export default function AttendancePage() {
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Error</AlertTitle>
             <AlertDescription>{error}</AlertDescription>
-            <Button variant="outline" size="sm" onClick={clearError} className="mt-2">
+            <Button variant="outline" size="sm" onClick={() => setError(null)} className="mt-2">
               Dismiss
             </Button>
           </Alert>
@@ -123,66 +176,68 @@ export default function AttendancePage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="gap-2 w-full md:w-auto">
-                <Filter className="h-4 w-4" />
-                Filter
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80" align="end">
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium mb-2">Status</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="filter-ended"
-                        checked={filterStatus.includes("Ended")}
-                        onCheckedChange={() => handleStatusChange("Ended")}
-                      />
-                      <Label htmlFor="filter-ended">Ended</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="filter-planned"
-                        checked={filterStatus.includes("Planned")}
-                        onCheckedChange={() => handleStatusChange("Planned")}
-                      />
-                      <Label htmlFor="filter-planned">Planned</Label>
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <h4 className="font-medium mb-2">Division</h4>
-                  <div className="space-y-2">
-                    {divisions.map((division) => (
-                      <div key={division} className="flex items-center space-x-2">
+          <div className="flex gap-2">
+            {/* <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" className="gap-2 w-full md:w-auto">
+                  <Filter className="h-4 w-4" />
+                  Filter
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium mb-2">Status</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
                         <Checkbox
-                          id={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}
-                          checked={filterDivisions.includes(division)}
-                          onCheckedChange={() => handleDivisionChange(division)}
+                          id="filter-ended"
+                          checked={filterStatus.includes("Ended")}
+                          onCheckedChange={() => handleStatusChange("Ended")}
                         />
-                        <Label htmlFor={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}>{division}</Label>
+                        <Label htmlFor="filter-ended">Ended</Label>
                       </div>
-                    ))}
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="filter-planned"
+                          checked={filterStatus.includes("Planned")}
+                          onCheckedChange={() => handleStatusChange("Planned")}
+                        />
+                        <Label htmlFor="filter-planned">Planned</Label>
+                      </div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-medium mb-2">Division</h4>
+                    <div className="space-y-2">
+                      {divisions.map((division) => (
+                        <div key={division} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}
+                            checked={filterDivisions.includes(division)}
+                            onCheckedChange={() => handleDivisionChange(division)}
+                          />
+                          <Label htmlFor={`filter-${division.toLowerCase().replace(/\s+/g, "-")}`}>{division}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFilterStatus([])
+                        setFilterDivisions([])
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
                   </div>
                 </div>
-                <div className="flex justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFilterStatus([])
-                      setFilterDivisions([])
-                    }}
-                  >
-                    Clear Filters
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </PopoverContent>
+            </Popover> */}
+          </div>
         </div>
 
         {isLoading ? (
@@ -198,7 +253,6 @@ export default function AttendancePage() {
                   session={session}
                   attendanceTaken={attendanceTakenSessions.includes(session._id)}
                   onTakeAttendance={() => router.push(`/main/attendance/${session._id}`)}
-                  onViewAttendance={() => router.push(`/main/attendance/${session._id}?view=readonly`)}
                 />
               ))
             ) : (
@@ -213,10 +267,10 @@ export default function AttendancePage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between mt-6 gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">Showing</span>
-              <Select value={String(itemsPerPage)} onValueChange={(val) => setPagination(1, Number(val))}>
-                {/* <SelectTrigger className="w-16">
-                  <SelectValue placeholder="4" />
-                </SelectTrigger> */}
+              <Select value={String(itemsPerPage)} onValueChange={(val) => {
+                setItemsPerPage(Number(val))
+                setCurrentPage(1)
+              }}>
                 <SelectContent>
                   <SelectItem value="2">2</SelectItem>
                   <SelectItem value="4">4</SelectItem>
@@ -225,18 +279,17 @@ export default function AttendancePage() {
                 </SelectContent>
               </Select>
               <span className="text-sm text-muted-foreground">
-Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
-{Math.min(currentPage * itemsPerPage, totalSessions)} out of {totalSessions} records
-</span>
-
+                Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
+                {Math.min(currentPage * itemsPerPage, totalSessions)} out of {totalSessions} records
+              </span>
             </div>
 
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
                 size="icon"
-               onClick={() => setPagination(currentPage - 1, itemsPerPage)}
-              disabled={currentPage === 1}
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -248,8 +301,8 @@ Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
                     key={pageNumber}
                     variant={currentPage === pageNumber ? "default" : "outline"}
                     size="icon"
-                    onClick={() => setPagination(currentPage - 1, itemsPerPage)}
-                    disabled={currentPage === 1}>
+                    onClick={() => setCurrentPage(pageNumber)}
+                  >
                     {pageNumber}
                   </Button>
                 )
@@ -258,8 +311,9 @@ Showing {currentPage * itemsPerPage - itemsPerPage + 1} to{" "}
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setPagination(currentPage + 1, itemsPerPage)} 
-                disabled={currentPage * itemsPerPage >= totalSessions}>
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage * itemsPerPage >= totalSessions}
+              >
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>

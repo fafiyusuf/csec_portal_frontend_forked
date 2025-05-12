@@ -13,6 +13,7 @@ import { Event, Session } from '@/types/eventSession';
 import { calculateStatus, formatDisplayDate } from '@/utils/date';
 import { useEffect, useState } from 'react';
 import { FiArrowLeft, FiChevronDown, FiPlus } from 'react-icons/fi';
+import { useRouter } from 'next/navigation';
 
 type NavigationState = {
   contentType: 'sessions' | 'events';
@@ -20,6 +21,7 @@ type NavigationState = {
 };
 
 const SessionsPage = () => {
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<'list' | 'table'>('list');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEventModal, setShowEventModal] = useState(false);
@@ -183,6 +185,10 @@ const SessionsPage = () => {
 
   const canGoBack = currentStackIndex > 0;
 
+  const handleAttendanceClick = (sessionId: string) => {
+    router.push(`/main/attendance/${sessionId}`);
+  };
+
   return (
     <div className="p-4 md:p-6 text-foreground bg-background min-h-screen transition-colors dark:bg-gray-900 dark:text-gray-100">
       {/* Header Controls */}
@@ -247,10 +253,10 @@ const SessionsPage = () => {
                 <SessionItem
                   key={item._id}
                   item={{
-                      ...item,
-                      id: item._id, // Map _id to id if needed
-                      status: item.status // Map startDate to date if needed
-                    }}
+                    ...item,
+                    id: item._id,
+                    status: item.status
+                  }}
                   onEdit={handleEdit as any}
                   onDelete={handleDelete as any}
                   allowAttendance={item.status === 'ongoing'}

@@ -37,7 +37,7 @@ export default function Dashboard() {
       {/* Main content area */}
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Left content */}
-        <div className="flex-1 p-4 lg:p-4 space-y-4 absolute">
+        <div className="flex-1 p-4 lg:p-4 space-y-4 ">
           <UpcomingEvent />
           <StatsPage />
           {/* <AttendanceOverview /> */}

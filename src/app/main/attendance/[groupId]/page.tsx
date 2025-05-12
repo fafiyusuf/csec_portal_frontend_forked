@@ -128,7 +128,7 @@ export default function GroupAttendancePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <Popover>
+              {/* <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="gap-2 w-full md:w-auto">
                     <Filter className="h-4 w-4" />
@@ -159,7 +159,7 @@ export default function GroupAttendancePage() {
                     </div>
                   </div>
                 </PopoverContent>
-              </Popover>
+              </Popover> */}
             </div>
 
             {Object.keys(membersByGroup).length === 0 ? (

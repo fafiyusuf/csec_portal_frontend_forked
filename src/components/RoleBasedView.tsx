@@ -101,16 +101,22 @@ export const DivisionHeadView: React.FC<DivisionBasedViewProps> = ({
   return null;
 };
 
+// Add a utility to check if the user is editing their own profile
+function isSelf(user: any, memberId: string) {
+  return user?.member?._id === memberId;
+}
+
 // Member view - for viewing content
 export function MemberView({ children, fallback }: Omit<RoleBasedViewProps, 'allowedRoles'>) {
-  return (
-    <RoleBasedView
-      allowedRoles={['Member']}
-      fallback={fallback}
-    >
-      {children}
-    </RoleBasedView>
-  );
+  const { user } = useUserStore();
+  // Only allow if viewing/editing own profile
+  // (Assume a prop or context provides the memberId being viewed/edited)
+  // If not available, fallback to just role check
+  if (!user?.member?.clubRole || user.member.clubRole !== 'Member') {
+    return fallback || null;
+  }
+  // If you have memberId context, check isSelf(user, memberId) here
+  return <>{children}</>;
 }
 
 // Member management view - for adding/deleting members

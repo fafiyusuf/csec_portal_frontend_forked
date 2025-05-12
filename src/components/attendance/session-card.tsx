@@ -6,19 +6,20 @@ import { cn } from "@/lib/utils"
 import type { Session } from "@/types/attendance"
 import { format, parse } from "date-fns"
 import { useEffect } from "react"
+import { useUserStore } from "@/stores/userStore"
+import { isPresident } from "@/utils/roles"
+import { getDivisionFromRole } from "@/lib/divisionPermissions"
 
 interface SessionCardProps {
   session: Session
   attendanceTaken: boolean
   onTakeAttendance: () => void
-  onViewAttendance: () => void
 }
 
-export default function SessionCard({ session, attendanceTaken, onTakeAttendance, onViewAttendance }: SessionCardProps) {
-  // Helper function to format dates
+export default function SessionCard({ session, attendanceTaken, onTakeAttendance }: SessionCardProps) {
   useEffect(() => {
-  console.log("Fetched sessions:", session);
-}, [session]);
+    console.log("Fetched sessions:", session);
+  }, [session]);
   const formatDate = (dateString: string) => {
     try {
       const date = parse(dateString, "yy/MM/dd", new Date())
@@ -39,55 +40,53 @@ export default function SessionCard({ session, attendanceTaken, onTakeAttendance
   let buttonAction = () => {};
   let buttonDisabled = false;
 
-  if (session.status.toLowerCase() === "ongoing") {
+  const { user } = useUserStore();
+  const userRole = user?.member?.clubRole;
+  const userDivision = getDivisionFromRole(userRole);
+  const canManageAttendance = isPresident(userRole) || (userDivision && userDivision === session.division);
+
+  if ((session.status.toLowerCase() === "ongoing" || session.status.toLowerCase() === "on-going") && !attendanceTaken) {
     showButton = true;
-    if (attendanceTaken) {
-      buttonLabel = "View Attendance";
-      buttonAction = onViewAttendance;
-    } else {
-      buttonLabel = "Take Attendance";
-      buttonAction = onTakeAttendance;
-    }
-  } else if (session.status.toLowerCase() === "ended") {
-    showButton = true;
-    buttonLabel = "View Attendance";
-    buttonAction = onViewAttendance;
+    buttonLabel = "Take Attendance";
+    buttonAction = onTakeAttendance;
+  }
+
+  // Only show button if canManageAttendance
+  if (!canManageAttendance) {
+    showButton = false;
   }
 
   return (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow dark:bg-gray-800 dark:text-white">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <Badge
-              className={cn(
-                "px-3 py-1 text-xs font-medium dark:bg-gray-800 dark:text-white",
-                session.status.toLowerCase() === "ended" 
-                  ? "bg-red-100 text-red-800" 
-                  : session.status.toLowerCase() === "planned"
-                  ? "bg-yellow-100 text-yellow-800"
-                  : "bg-green-100 text-green-800",
-              )}
-            >
-              {session.status}
-            </Badge>
-            <h3 className="font-semibold dark:bg-gray-800 dark:text-white">{session.division}</h3>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 md:p-6 dark:shadow-xl dark:border dark:border-gray-700">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-start gap-4">
+        <div className="flex-1">
+          <div className="flex flex-col md:flex-row md:items-center gap-3">
+            <div>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-400 dark:bg-green-900 dark:text-green-100`}>
+                {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+              </span>
+            </div>
+            <div>
+              <h2 className="text-lg md:text-xl font-bold dark:text-gray-100">{session.sessionTitle}</h2>
+            </div>
           </div>
-          <h4 className="text-lg font-semibold mb-1 dark:bg-gray-800 dark:text-white">{session.sessionTitle}</h4>
-          <p className="text-sm text-muted-foreground dark:bg-gray-800 dark:text-white">
-            {formatDate(session.startDate)} - {formatDate(session.endDate)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">{sessionTime}</p>
+          <p className="font-medium mt-2 text-gray-800 dark:text-gray-300">{session.division || ''}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{formatDate(session.startDate)}</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{sessionTime}</p>
         </div>
-        {showButton && (
-          <Button
-            className={buttonDisabled ? "bg-gray-400 cursor-not-allowed" : "bg-blue-700 hover:bg-blue-800 text-white"}
-            onClick={buttonAction}
-            disabled={buttonDisabled}
-          >
-            {buttonLabel}
-          </Button>
-        )}
+      </div>
+      <div className="mt-4 flex justify-end">
+        <div className="flex gap-2">
+          {showButton && (
+            <Button 
+              className="bg-blue-700 hover:bg-blue-800 text-white" 
+              onClick={buttonAction}
+              disabled={buttonDisabled}
+            >
+              {buttonLabel}
+            </Button>
+          )}
+        </div>
       </div>
       <div className="flex gap-2 mt-4">
         {session.groups?.map((group) => (

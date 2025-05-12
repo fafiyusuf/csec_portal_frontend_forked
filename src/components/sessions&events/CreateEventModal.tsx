@@ -4,6 +4,8 @@ import { toast } from '@/components/ui/use-toast';
 import { useFormik } from 'formik';
 import { useEffect, useState } from 'react';
 import { FiX } from 'react-icons/fi';
+import { useUserStore } from "@/stores/userStore"
+import { canCreateSessionsAndEvents, canManageSessionsAndEvents } from "@/lib/divisionPermissions"
 
 type CreateEventModalProps = {
   isOpen: boolean;
@@ -32,6 +34,23 @@ type CreateEventModalProps = {
 
 const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEventModalProps) => {
   const [loading, setLoading] = useState(false);
+  const { user } = useUserStore();
+  const userRole = user?.member?.clubRole;
+
+  // Check if user can create events
+  if (!canCreateSessionsAndEvents(userRole)) {
+    return null;
+  }
+
+  // Check if user can manage events for the selected division
+  if (editingItem?.division && !canManageSessionsAndEvents(userRole, editingItem.division)) {
+    toast({
+      variant: "destructive",
+      title: "Access Denied",
+      description: "You don't have permission to manage events for this division."
+    });
+    return null;
+  }
 
   // Handle form reset when modal is closed
   const formik = useFormik({
@@ -49,8 +68,18 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
       endTime: editingItem?.endTime || '',
       attendance: editingItem?.attendance || 'optional',
     },
-    enableReinitialize: true, // This ensures the form will reinitialize when `editingItem` changes
+    enableReinitialize: true,
     onSubmit: async (values) => {
+      // Validate required fields
+      if (!values.eventTitle || !values.division || !values.eventDate || !values.startTime || !values.endTime) {
+        toast({
+          variant: "destructive",
+          title: "Validation Error",
+          description: "Please fill in all required fields."
+        });
+        return;
+      }
+
       // Ensure groups is always an array
       const groups = Array.isArray(values.groups) ? values.groups : [values.groups];
       // Ensure eventDate is in YYYY-MM-DD format
@@ -69,11 +98,21 @@ const CreateEventModal = ({ isOpen, onClose, onSubmit, editingItem }: CreateEven
         eventData.attendance = values.attendance;
       }
       try {
+        setLoading(true);
         await onSubmit(eventData);
-        toast({ title: 'Success', description: 'Event created successfully!', variant: 'default' });
+        toast({ 
+          title: 'Success', 
+          description: 'Event created successfully!', 
+          variant: 'default',
+          className: "bg-green-50 dark:bg-green-900 border-green-200 dark:border-green-800"
+        });
         onClose();
       } catch (err) {
-        toast({ title: 'Error', description: 'Failed to create event. Please try again.', variant: 'destructive' });
+        toast({ 
+          title: 'Error', 
+          description: 'Failed to create event. Please try again.', 
+          variant: 'destructive' 
+        });
       } finally {
         setLoading(false);
       }
