@@ -27,7 +27,7 @@ const UpcomingEvent = () => {
       <div className="bg-blue-400 h-auto min-h-[200px] sm:min-h-[260px] rounded-lg shadow-sm p-4 sm:p-6 border border-gray-100">
         {/* First row - Event title and Members tag */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-          <div>
+          <div className="flex-1">
             <h2 className="text-lg font-semibold text-gray-800">Upcoming Event</h2>
             <p className="text-gray-900 mt-1 text-sm sm:text-base">
               {loading ? 'Loading...' : latestEventTitle}
@@ -41,7 +41,7 @@ const UpcomingEvent = () => {
         </div>
 
         {/* Image */}
-        <div className="my-4 mx-auto w-[120px] sm:w-[150px] h-[80px] sm:h-[100px] bg-gray-300 rounded-lg flex items-center justify-center">
+        <div className="my-4 mx-auto w-[100px] sm:w-[120px] h-[70px] sm:h-[90px] bg-gray-300 rounded-lg flex items-center justify-center">
           <span className="text-gray-500">
             <Image src={eventman} alt="man" className="w-full h-full object-contain" />
           </span>

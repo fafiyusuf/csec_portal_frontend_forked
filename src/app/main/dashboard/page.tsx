@@ -35,16 +35,16 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Main content area */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6">
         {/* Left content */}
-        <div className="flex-1 p-4 lg:p-4 space-y-4 ">
+        <div className="flex-1 space-y-6">
           <UpcomingEvent />
           <StatsPage />
           {/* <AttendanceOverview /> */}
         </div>
 
         {/* Calendar sidebar - moves to bottom on mobile */}
-        <div className="w-full lg:w-[300px] lg:fixed lg:right-0 lg:top-20 lg:h-[calc(100vh-5rem)] bg-white dark:bg-gray-800 shadow-sm border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 overflow-y-auto dark:text-gray-100">
+        <div className="w-full lg:w-[280px] xl:w-[320px] lg:sticky lg:top-20 lg:h-[calc(100vh-5rem)] bg-white dark:bg-gray-800 shadow-sm border-t lg:border-t-0 lg:border-l border-gray-200 dark:border-gray-700 overflow-y-auto dark:text-gray-100">
           <CalendarSidebar />
         </div>
       </div>
