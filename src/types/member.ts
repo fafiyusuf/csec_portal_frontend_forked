@@ -26,7 +26,7 @@ export interface Member {
   status?: string;
   createdAt?: string;
   lastSeen?: string;
-  Attendance?: string;
+  attendance?: string;
   campusStatus?: string;
   token?: string;
   refreshToken?: string;

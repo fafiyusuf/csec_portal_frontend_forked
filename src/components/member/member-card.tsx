@@ -91,7 +91,7 @@ export function MemberCard({ member, onEdit, onDelete, canEdit, canDelete }: Mem
             </div>
             <div>
               <p className="text-muted-foreground">Attendance:</p>
-              <p>{member.Attendance || 'N/A'}</p>
+              <p>{member.attendance || 'N/A'}</p>
             </div>
           </div>
 

@@ -72,6 +72,7 @@ fetchMembers: async (options: FetchMembersOptions = {}) => {
   set({ loading: true, error: null });
   try {
     const data = await membersApi.fetchMembers(options);
+    console.log(data,'data')
     
     // Handle API response structure correctly
     set({

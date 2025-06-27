@@ -18,6 +18,7 @@ export default function DivisionsPage() {
   const searchQuery = searchParams.get("search") || ""
   const [error, setError] = useState<string | null>(null)
   const { user } = useUserStore()
+  const userRole = user?.member?.clubRole?.toLowerCase();
 
   const { divisionSummaries, loading, fetchDivisionSummaries, showAddDivisionDialog, setShowAddDivisionDialog } = useDivisionsStore()
 
@@ -82,7 +83,7 @@ export default function DivisionsPage() {
               onChange={handleSearch}
             />
           </div>
-          {user?.member?.clubRole && (
+          {userRole !== "member" && (
             <Button 
               onClick={() => setShowAddDivisionDialog(true)}
               disabled={!canManageDivision(user?.member?.clubRole, 'all')}
@@ -104,9 +105,11 @@ export default function DivisionsPage() {
             <p className="text-muted-foreground mt-2">
               {searchQuery ? "Try a different search term or" : "Get started by"} creating a new division.
             </p>
-            <Button onClick={() => setShowAddDivisionDialog(true)} className="mt-4">
-              Add Division
-            </Button>
+            {userRole !== "member" && (
+              <Button onClick={() => setShowAddDivisionDialog(true)} className="mt-4">
+                Add Division
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

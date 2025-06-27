@@ -65,6 +65,9 @@ export default function MembersPage() {
     });
   }, [fetchMembers, searchQuery, filterOptions, currentPage, itemsPerPage,debouncedSearchQuery,filterOptions.division,filterOptions.group,filterOptions.campusStatus,filterOptions.attendance,filterOptions.membershipStatus,filterOptions.divisionRole]);
 
+  useEffect(()=>{
+    console.log(members,'members')
+  },[])
   const getInitials = (name?: string | null) => {
     if (!name || typeof name !== 'string') return <User className="h-4 w-4" />;
     
@@ -196,12 +199,12 @@ export default function MembersPage() {
                 <TableHeader className="dark:bg-gray-800">
                   <TableRow className="hover:bg-transparent dark:border-gray-800">
                     <TableHead className="dark:text-gray-300">Member Name</TableHead>
-                    <TableHead className="hidden md:table-cell dark:text-gray-300">ID</TableHead>
+                    {/* <TableHead className="hidden md:table-cell dark:text-gray-300">ID</TableHead> */}
                     <TableHead className="hidden md:table-cell dark:text-gray-300">Division</TableHead>
                     <TableHead className="hidden lg:table-cell dark:text-gray-300">Group</TableHead>
                     <TableHead className="hidden xl:table-cell dark:text-gray-300">Attendance</TableHead>
                     <TableHead className="hidden md:table-cell dark:text-gray-300">Year</TableHead>
-                    <TableHead className="dark:text-gray-300">Status</TableHead>
+                    <TableHead className="dark:text-gray-300">Attendance</TableHead>
                     <TableHead className="text-right dark:text-gray-300">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -259,14 +262,14 @@ export default function MembersPage() {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell dark:text-white">{member._id}</TableCell>
+                        {/* <TableCell className="hidden md:table-cell dark:text-white">{member.member_id}</TableCell> */}
                         <TableCell className="hidden md:table-cell dark:text-white">{member.division || '-'}</TableCell>
                         <TableCell className="hidden lg:table-cell dark:text-white">{member.group || '-'}</TableCell>
-                        <TableCell className="hidden xl:table-cell dark:text-white">{member.Attendance || '-'}</TableCell>
+                        <TableCell className="hidden xl:table-cell dark:text-white">{member.attendance || '-'}</TableCell>
                         <TableCell className="hidden md:table-cell dark:text-white">{member.graduationYear || '-'}</TableCell>
                         <TableCell>
-                          <Badge className={getStatusColor(member.status)}>
-                            {member.status || 'Unknown'}
+                          <Badge className={getStatusColor(member.attendance)}>
+                            {member.attendance || 'Unknown'}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">

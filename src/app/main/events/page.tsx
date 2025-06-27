@@ -14,6 +14,7 @@ import { calculateStatus, formatDisplayDate } from '@/utils/date';
 import { useEffect, useState } from 'react';
 import { FiArrowLeft, FiChevronDown, FiPlus } from 'react-icons/fi';
 import { useRouter } from 'next/navigation';
+import { useUserStore } from "@/stores/userStore"
 
 type NavigationState = {
   contentType: 'sessions' | 'events';
@@ -50,6 +51,9 @@ const SessionsPage = () => {
     sessionsTotalCount,
     eventsTotalCount,
   } = useSessionEventStore();
+
+  const user = useUserStore((state) => state.user);
+  const userRole = user?.member?.clubRole?.toLowerCase();
 
   // Initialize navigation stack
   useEffect(() => {
@@ -228,17 +232,19 @@ const SessionsPage = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           <ViewToggle viewMode={viewMode} onViewModeChange={setViewMode} />
-          <button
-            onClick={() => {
-              setEditingItem(null);
-              contentType === 'sessions' ? setShowCreateModal(true) : setShowEventModal(true);
-            }}
-            className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors
-                     dark:bg-blue-700 dark:hover:bg-blue-800"
-          >
-            <FiPlus className="mr-2" />
-            {contentType === 'sessions' ? 'Create Session' : 'Create Event'}
-          </button>
+          {userRole !== "member" && (
+            <button
+              onClick={() => {
+                setEditingItem(null);
+                contentType === 'sessions' ? setShowCreateModal(true) : setShowEventModal(true);
+              }}
+              className="flex items-center bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors
+                       dark:bg-blue-700 dark:hover:bg-blue-800"
+            >
+              <FiPlus className="mr-2" />
+              {contentType === 'sessions' ? 'Create Session' : 'Create Event'}
+            </button>
+          )}
         </div>
       </div>
 
