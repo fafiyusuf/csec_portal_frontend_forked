@@ -29,6 +29,8 @@ function LoginPageContent() {
 
   const handleSubmit = async (values: { email: string; password: string; rememberMe: boolean }) => {
     try {
+      // Set loading state before login
+      if (!isLoading) useUserStore.setState({ isLoading: true });
       const success = await login(values.email, values.password, values.rememberMe);
       
       if (success) {
@@ -48,6 +50,9 @@ function LoginPageContent() {
     } catch (err) {
       console.error('Login error:', err);
       toast.error(error || 'Login failed');
+    } finally {
+      // Always reset loading state after login attempt
+      useUserStore.setState({ isLoading: false });
     }
   };
 
