@@ -162,7 +162,7 @@ export default function MembersPage() {
     }
   };
   return (
-    <div className="container mx-auto p-4 lg:p-6 space-y-6 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Card className="dark:border dark:border-gray-800">
         <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 dark:bg-gray-800">
           <CardTitle className="text-2xl lg:text-3xl font-bold dark:text-white">All Members</CardTitle>
@@ -203,9 +203,9 @@ export default function MembersPage() {
                     <TableHead className="hidden md:table-cell dark:text-gray-300">Division</TableHead>
                     <TableHead className="hidden lg:table-cell dark:text-gray-300">Group</TableHead>
                     <TableHead className="hidden xl:table-cell dark:text-gray-300">Attendance</TableHead>
-                    <TableHead className="hidden md:table-cell dark:text-gray-300">Year</TableHead>
+                    <TableHead className="hidden md:table-cell dark:text-gray-300">GradYear</TableHead>
                     <TableHead className="dark:text-gray-300">Attendance</TableHead>
-                    <TableHead className="text-right dark:text-gray-300">Actions</TableHead>
+                    <TableHead className="text-right dark:text-gray-300">Action</TableHead>
                   </TableRow>
                 </TableHeader>
   
