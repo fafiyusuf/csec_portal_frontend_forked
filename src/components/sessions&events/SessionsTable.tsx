@@ -1,5 +1,6 @@
 import { format, parse } from 'date-fns';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { canManageSessionsAndEvents } from '@/lib/divisionPermissions';
 
 type SessionItem = {
   id?: string;
@@ -18,6 +19,7 @@ type SessionsTableProps = {
   contentType: 'sessions' | 'events';
   onEdit: (item: SessionItem & { startDate: string; sessionTitle: string }) => void;
   onDelete: (id: string) => void;
+  userRole: string | undefined;
 };
 
 // Helper to parse both 'YYYY-MM-DD' and 'YY/MM/DD'
@@ -35,7 +37,13 @@ const parseFlexibleDate = (dateString: string | undefined) => {
   return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 };
 
-const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTableProps) => {
+const normalizeDivision = (division: string) =>
+  division.endsWith(' Division') ? division : `${division} Division`;
+
+const normalizeRole = (role: string | undefined) =>
+  role ? role.replace(/\b\w/g, c => c.toUpperCase()) : undefined;
+
+const SessionsTable = ({ items, contentType, onEdit, onDelete, userRole }: SessionsTableProps) => {
   const statusColors: Record<string, string> = {
     planned: 'bg-yellow-50 text-yellow-400',
     ongoing: 'bg-blue-50 text-blue-400',
@@ -69,6 +77,13 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
               const parsedDate = parseFlexibleDate(item.startDate);
               const formattedDate = parsedDate ? format(parsedDate, 'MMM d, yyyy') : 'Date not specified';
 
+              // Debug log for permission check
+              console.log('Table row:', {
+                userRole,
+                division: item.division,
+                canManage: canManageSessionsAndEvents(normalizeRole(userRole) as any, normalizeDivision(item.division || ""))
+              });
+
               return (
                 <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <td className="px-4 py-4 whitespace-nowrap text-sm dark:text-gray-200">{formattedDate}</td>
@@ -91,7 +106,7 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap flex gap-2">
-                    {item.startDate && item.sessionTitle && (
+                    {canManageSessionsAndEvents(normalizeRole(userRole) as any, normalizeDivision(item.division || "")) && item.startDate && item.sessionTitle && (
                       <button 
                         onClick={() => onEdit({ 
                           ...item, 
@@ -99,14 +114,16 @@ const SessionsTable = ({ items, contentType, onEdit, onDelete }: SessionsTablePr
                           sessionTitle: item.sessionTitle as string 
                         })}
                         className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        title="Edit"
                       >
                         <FiEdit2 size={18} />
                       </button>
                     )}
-                    {key && (
+                    {canManageSessionsAndEvents(normalizeRole(userRole) as any, normalizeDivision(item.division || "")) && key && (
                       <button 
                         onClick={() => onDelete(key)}
                         className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                        title="Delete"
                       >
                         <FiTrash2 size={18} />
                       </button>

@@ -1,5 +1,6 @@
 import { format, parse } from 'date-fns';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { canManageSessionsAndEvents } from '@/lib/divisionPermissions';
 
 type EventTableProps = {
   items: {
@@ -22,6 +23,7 @@ type EventTableProps = {
   }[];
   onEdit: (item: EventTableProps['items'][number]) => void;
   onDelete: (id: string) => void;
+  userRole: string | undefined;
 };
 
 // Helper to parse both 'YYYY-MM-DD' and 'YY/MM/DD'
@@ -39,7 +41,13 @@ const parseFlexibleDate = (dateString: string | undefined) => {
   return parsed && !isNaN(parsed.getTime()) ? parsed : null;
 };
 
-const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
+const normalizeDivision = (division: string) =>
+  division.endsWith(' Division') ? division : `${division} Division`;
+
+const normalizeRole = (role: string | undefined) =>
+  role ? role.replace(/\b\w/g, c => c.toUpperCase()) : undefined;
+
+const EventTable = ({ items, onEdit, onDelete, userRole }: EventTableProps) => {
   const statusColors = {
     planned: 'bg-yellow-50 text-yellow-400',
     ongoing: 'bg-blue-50 text-blue-400',
@@ -91,18 +99,24 @@ const EventTable = ({ items, onEdit, onDelete }: EventTableProps) => {
                     </span>
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap flex gap-2">
-                    <button 
-                      onClick={() => onEdit(item)}
-                      className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                    >
-                      <FiEdit2 size={18} />
-                    </button>
-                    <button 
-                      onClick={() => onDelete(item._id)}
-                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
-                    >
-                      <FiTrash2 size={18} />
-                    </button>
+                    {canManageSessionsAndEvents(normalizeRole(userRole) as any, normalizeDivision(item.division)) && (
+                      <button 
+                        onClick={() => onEdit(item)}
+                        className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                        title="Edit"
+                      >
+                        <FiEdit2 size={18} />
+                      </button>
+                    )}
+                    {canManageSessionsAndEvents(normalizeRole(userRole) as any, normalizeDivision(item.division)) && (
+                      <button 
+                        onClick={() => onDelete(item._id)}
+                        className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                        title="Delete"
+                      >
+                        <FiTrash2 size={18} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );

@@ -161,13 +161,13 @@ export const MembersTable = ({
 
       {/* Filter panel */}
       {isFilterOpen && (
-        <div className="border rounded-lg p-4 bg-muted/50">
+        <div className="border rounded-lg p-4 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
           <h3 className="font-medium mb-2">Filters</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
             <div className="space-y-2">
               <Label>Status</Label>
               <select
-                className="w-full p-2 border rounded"
+                className="w-full p-2 border rounded text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50 "
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
               >
@@ -184,7 +184,7 @@ export const MembersTable = ({
       {/* Members table */}
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
             <tr>
               <th className="p-4 text-left w-12">
                 <Checkbox
@@ -209,7 +209,7 @@ export const MembersTable = ({
               currentMembers.map((member) => (
                 <tr
                   key={member._id}
-                  className="border-b hover:bg-gray-50"
+                  className="border-b text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50"
                 >
                   <td className="p-4">
                     <Checkbox

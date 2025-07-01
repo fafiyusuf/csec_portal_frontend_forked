@@ -128,7 +128,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       {/* Edit Button */}
       {isOwnProfile && (
         <div
-          className="absolute top-2 right-2 z-50 p-1.5 bg-red-500 rounded-full hover:bg-red-600 transition-colors cursor-pointer"
+          className="absolute top-2 right-2 z-10 p-1.5 bg-red-500 rounded-full hover:bg-red-600 transition-colors cursor-pointer"
           onClick={handleEditClick}
         >
           <FiEdit className="text-white text-lg" />

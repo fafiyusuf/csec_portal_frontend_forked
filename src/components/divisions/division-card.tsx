@@ -48,14 +48,7 @@ export function DivisionCard({ division, groupCount, memberCount, onAddMember }:
             </Link>
           </div>
         </div>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {typeof memberCount === 'number' ? memberCount : (typeof division === 'string' ? 0 : division.memberCount || 0)} total members
-        </p>
-        {typeof groupCount === 'number' && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {groupCount} groups
-          </p>
-        )}
+      
       </CardHeader>
       <CardContent>
         <div className="mb-2 text-sm text-gray-600 dark:text-gray-300">

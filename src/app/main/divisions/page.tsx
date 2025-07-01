@@ -45,9 +45,24 @@ export default function DivisionsPage() {
     }
   }
 
-  const filteredDivisions = divisionSummaries.filter(division =>
+  // Filtered divisions: Only show all if President/Vice President, else only show the division head's division
+  const isPresident = user?.member?.clubRole === 'President' || user?.member?.clubRole === 'Vice President';
+  let filteredDivisions = divisionSummaries.filter(division =>
     division.division.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  );
+  if (!isPresident && user?.member?.clubRole?.includes('President')) {
+    // Only show the division for which the user is head (exact match, robust to 'Division' suffix)
+    const userDivision = user?.member?.clubRole
+      ?.replace(/ division president$/i, ' Division')
+      ?.trim();
+    // Debug log
+    console.log('userRole:', user?.member?.clubRole);
+    console.log('userDivision:', userDivision);
+    console.log('allDivisions:', divisionSummaries.map(d => d.division.toLowerCase()));
+    filteredDivisions = filteredDivisions.filter(division =>
+      division.division.toLowerCase() === userDivision?.toLowerCase()
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -83,7 +98,7 @@ export default function DivisionsPage() {
               onChange={handleSearch}
             />
           </div>
-          {userRole !== "member" && (
+          {isPresident && (
             <Button 
               onClick={() => setShowAddDivisionDialog(true)}
               disabled={!canManageDivision(user?.member?.clubRole, 'all')}
@@ -105,7 +120,7 @@ export default function DivisionsPage() {
             <p className="text-muted-foreground mt-2">
               {searchQuery ? "Try a different search term or" : "Get started by"} creating a new division.
             </p>
-            {userRole !== "member" && (
+            {isPresident && (
               <Button onClick={() => setShowAddDivisionDialog(true)} className="mt-4">
                 Add Division
               </Button>

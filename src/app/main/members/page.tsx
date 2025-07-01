@@ -164,21 +164,7 @@ export default function MembersPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Card className="dark:border dark:border-gray-800">
-        <CardHeader className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0 dark:bg-gray-800">
-          <CardTitle className="text-2xl lg:text-3xl font-bold dark:text-white">All Members</CardTitle>
-          <div className="flex items-center space-x-2">
-            {canAddMember() && (
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-                <MemberForm 
-                  onSubmit={handleAddMember} 
-                  onClose={() => setIsAddDialogOpen(false)}
-                />
-              </Dialog>
-            )}
-          </div>
-        </CardHeader>
-  
-        <CardContent className="dark:bg-gray-900">
+          <CardContent className="dark:bg-gray-900">
           {/* Search and Filter Section */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
             <div className="relative w-full sm:w-72 lg:w-96">
@@ -190,6 +176,16 @@ export default function MembersPage() {
                 onChange={handleSearch} 
               />
             </div>
+            <div className="flex items-center space-x-2">
+            {canAddMember() && (
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <MemberForm 
+                  onSubmit={handleAddMember} 
+                  onClose={() => setIsAddDialogOpen(false)}
+                />
+              </Dialog>
+            )}
+          </div>
           </div>
   
           {/* Members Table */}

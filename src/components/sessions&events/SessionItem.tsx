@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
 import { useUserStore } from '@/stores/userStore';
-import { getDivisionFromRole } from '@/lib/divisionPermissions';
+import { getDivisionFromRole, canManageSessionsAndEvents } from '@/lib/divisionPermissions';
 import { UserRole } from '@/utils/roles';
 
 type SessionItemProps = {
@@ -51,7 +51,7 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
   const { user } = useUserStore();
   const userRole = user?.member?.clubRole;
   const userDivision = getDivisionFromRole(userRole);
-  const canManageAttendance = userRole === 'President' || (userDivision && userDivision === item.division);
+  const canManage = canManageSessionsAndEvents(userRole, item.division);
   
   const handleAttendanceClick = () => {
     const sessionId = item._id || item.id;
@@ -78,7 +78,7 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
   };
 
   // Only show attendance button for ongoing sessions and if user has permission
-  const showAttendanceButton = (item.status === 'ongoing' || item.status === 'on-going') && canManageAttendance;
+  const showAttendanceButton = (item.status === 'ongoing' || item.status === 'on-going') && canManage;
 
   // Format the date - use startDate if available, otherwise use date
   const dateToFormat = item.startDate || item.date;
@@ -137,18 +137,22 @@ const SessionItem = ({ item, onEdit, onDelete, allowAttendance }: SessionItemPro
           </div>
         )}
         <div className="flex gap-2 ml-auto">
-          <button 
-            onClick={() => onEdit(item)}
-            className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-          >
-            <FiEdit2 size={18} />
-          </button>
-          <button 
-            onClick={() => onDelete(item._id || item.id)}
-            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
-          >
-            <FiTrash2 size={18} />
-          </button>
+          {canManage && (
+            <>
+              <button 
+                onClick={() => onEdit(item)}
+                className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+              >
+                <FiEdit2 size={18} />
+              </button>
+              <button 
+                onClick={() => onDelete(item._id || item.id)}
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+              >
+                <FiTrash2 size={18} />
+              </button>
+            </>
+          )}
           {showAttendanceButton && (
             <Button 
               className="bg-blue-700 hover:bg-blue-800 text-white" 

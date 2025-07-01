@@ -289,6 +289,7 @@ const SessionsPage = () => {
             contentType,
             onEdit: handleEdit as any,
             onDelete: handleDelete as any,
+            userRole,
             date: items.length > 0 ? formatDisplayDate((items[0] as any).startDate) : '',
             className: "dark:bg-gray-800"
           } as any}
@@ -299,6 +300,7 @@ const SessionsPage = () => {
             items: items as any,
             onEdit: handleEdit as any,
             onDelete: handleDelete as any,
+            userRole,
             className: "dark:bg-gray-800"
           } as any}
         />

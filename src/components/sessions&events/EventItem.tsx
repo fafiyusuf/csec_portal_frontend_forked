@@ -1,6 +1,8 @@
 import { calculateStatus, getTimeLeft } from '@/utils/date';
 import { format, parse } from 'date-fns';
 import { FiEdit2, FiTrash2 } from 'react-icons/fi';
+import { useUserStore } from '@/stores/userStore';
+import { canManageSessionsAndEvents } from '@/lib/divisionPermissions';
 
 type EventItemProps = {
   item: {
@@ -50,6 +52,10 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
     ended: 'bg-gray-700 text-gray-200',
   };
 
+  const user = useUserStore((state) => state.user);
+  const userRole = user?.member?.clubRole;
+  const canManage = canManageSessionsAndEvents(userRole, item.division || "");
+
   // Format the date - try all possible date fields
   const dateToFormat = item.startDate || item.eventDate || item.date;
   const parsedDate = parseFlexibleDate(dateToFormat);
@@ -96,18 +102,22 @@ const EventItem = ({ item, onEdit, onDelete }: EventItemProps) => {
       
       <div className="mt-4 flex justify-end">
         <div className="flex gap-2">
-          <button 
-            onClick={() => onEdit(item)}
-            className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-          >
-            <FiEdit2 size={18} />
-          </button>
-          <button 
-            onClick={() => onDelete(item._id)}
-            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
-          >
-            <FiTrash2 size={18} />
-          </button>
+          {canManage && (
+            <>
+              <button 
+                onClick={() => onEdit(item)}
+                className="text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+              >
+                <FiEdit2 size={18} />
+              </button>
+              <button 
+                onClick={() => onDelete(item._id)}
+                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors duration-200"
+              >
+                <FiTrash2 size={18} />
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

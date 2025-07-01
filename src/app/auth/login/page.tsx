@@ -93,9 +93,14 @@ function LoginPageContent() {
             <h3 className="text-lg font-bold mb-2 text-gray-900 dark:text-white"></h3>
             <ul className="text-sm text-gray-700 dark:text-gray-200 space-y-2">
               <li><b>Member:</b> haibi@g.com</li>
-              <li><b> Head:</b> lelomohammed@gmail.com</li>
+              <li><b> Data ScienceHead:</b> lelomohammed@gmail.com</li>
+              <li><b>CPD Head:</b> fetiyayusuf@gmail.com</li>
+              <li><b>CBD Head:</b> zinedineissah@gmail.com</li>
+              <li><b>Dev Head:</b> segnitsega@gmail.com</li>
+              <li><b>Cyber Head:</b> nikodemos123@gmail.com</li>
               <li><b>President:</b> kiyakebe@gmail.com</li>
               <li><b>Password for all:</b> Pass@123</li>
+
             </ul>
             <Button className="mt-4 w-full" variant="outline" onClick={() => setShowTestInfo(false)}>
               Close

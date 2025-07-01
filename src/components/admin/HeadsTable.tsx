@@ -14,9 +14,9 @@ export const HeadsTable = ({
   onBan: (id: string) => void;
 }) => {
   return (
-    <div className="border rounded-lg overflow-hidden">
+    <div className="border rounded-lg overflow-hidden text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
       <table className="w-full">
-        <thead className="bg-gray-50">
+        <thead className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
           <tr>
             <th className="p-4 text-left">Name</th>
             <th className="p-4 text-left">Role</th>
@@ -25,7 +25,7 @@ export const HeadsTable = ({
         </thead>
         <tbody>
           {heads.map((head) => (
-            <tr key={head.id} className="border-b hover:bg-gray-50">
+            <tr key={head.id} className="border-b text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/50">
               <td className="p-4">
                 <div className="flex items-center gap-3">
                   <Avatar>

@@ -35,8 +35,21 @@ export default function AttendancePage() {
   const [totalSessions, setTotalSessions] = useState(0)
   const [attendanceTakenSessions, setAttendanceTakenSessions] = useState<string[]>([])
 
+  // After fetching sessions, filter for division heads
+  const isPresident = user?.member?.clubRole === 'President' || user?.member?.clubRole === 'Vice President';
+  const userDivision = getDivisionFromRole(user?.member?.clubRole);
+  console.log('userDivision:', userDivision);
+  console.log('all session divisions:', sessions.map(s => s.division));
+  let visibleSessions = sessions;
+  if (!isPresident && userDivision) {
+    visibleSessions = sessions.filter(session =>
+      session.division.toLowerCase() === userDivision.toLowerCase()
+    );
+    console.log('visibleSessions:', visibleSessions.map(s => s.division));
+  }
+
   // Get unique divisions
-  const divisions = [...new Set((sessions || []).map((session) => session.division))]
+  const divisions = [...new Set((visibleSessions || []).map((session) => session.division))]
 
   // Fetch sessions on mount
   useEffect(() => {
@@ -102,7 +115,7 @@ export default function AttendancePage() {
   }, [sessions])
 
   // Filter sessions based on search query and filters
-  const filteredSessions = (sessions || []).filter((session) => {
+  const filteredSessions = (visibleSessions || []).filter((session) => {
     const matchesSearch =
       session.sessionTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       session.division.toLowerCase().includes(searchQuery.toLowerCase())
@@ -115,9 +128,9 @@ export default function AttendancePage() {
   })
 
   // Only show ongoing sessions
-  const ongoingSessions = (sessions || []).filter(session => session.status.toLowerCase() === 'ongoing')
+  const ongoingSessions = (visibleSessions || []).filter(session => session.status.toLowerCase() === 'ongoing')
 
-  const currentSessions = sessions || []
+  const currentSessions = visibleSessions || []
   const totalPages = Math.ceil(totalSessions / Number(itemsPerPage))
 
   // Handle filter status change
@@ -246,8 +259,8 @@ export default function AttendancePage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {sessions.length > 0 ? (
-              sessions.map((session) => (
+            {filteredSessions.length > 0 ? (
+              filteredSessions.map((session) => (
                 <SessionCard
                   key={session._id}
                   session={session}

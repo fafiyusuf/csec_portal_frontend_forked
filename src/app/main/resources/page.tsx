@@ -7,6 +7,9 @@ import { Resource, useResourceStore } from "@/stores/resourceStore"
 import { useEffect, useState } from "react"
 import { FiChevronDown, FiChevronUp, FiEdit, FiExternalLink, FiPlus, FiTrash2 } from "react-icons/fi"
 import { useUserStore } from "@/stores/userStore"
+import { canManageDivision } from "@/lib/divisionPermissions"
+import { useToast } from '@/components/ui/use-toast'
+
 export default function ResourcesPage() {
   const {
     resources,
@@ -28,6 +31,7 @@ export default function ResourcesPage() {
   const [currentDivision, setCurrentDivision] = useState<string | null>(null)
   const [expandedDivisions, setExpandedDivisions] = useState<Record<string, boolean>>({})
   const [totalPages, setTotalPages] = useState(1)
+  const { toast } = useToast()
 
   // Load data on mount and when currentPage changes
   useEffect(() => {
@@ -69,10 +73,11 @@ export default function ResourcesPage() {
       }
       closeModal()
     } catch (error: unknown) {
-      // Only log actual errors, not the "No resource data" error
-      if (error instanceof Error && !error.message?.includes('No resource data')) {
-        console.error('Submission error:', error)
-      }
+      toast({
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'Failed to submit resource.',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -82,7 +87,11 @@ export default function ResourcesPage() {
       try {
         await deleteResource(id)
       } catch (error) {
-        console.error('Deletion error:', error)
+        toast({
+          title: 'Error',
+          description: error instanceof Error ? error.message : 'Failed to delete resource.',
+          variant: 'destructive',
+        })
       }
     }
   }
@@ -194,25 +203,29 @@ export default function ResourcesPage() {
                           </div>
                         </div>
                         <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => {
-                              setCurrentResource(resource)
-                              setIsModalOpen(true)
-                            }}
-                            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                          >
-                            <FiEdit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(resource._id)}
-                            className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                          >
-                            <FiTrash2 className="h-4 w-4" />
-                          </Button>
+                          {canManageDivision(user?.member?.clubRole, resource.division) && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setCurrentResource(resource)
+                                  setIsModalOpen(true)
+                                }}
+                                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                              >
+                                <FiEdit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(resource._id)}
+                                className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                              >
+                                <FiTrash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
